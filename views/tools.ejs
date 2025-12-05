@@ -1,0 +1,11 @@
+<%- include('partials/layout', { title: 'Fitness Tools', user: (typeof user !== 'undefined' ? user : null) }) %>
+<section>
+  <h1>Fitness Tools</h1>
+  <ul>
+    <li><a href="/tools/bmi">BMI Calculator</a></li>
+    <li><a href="/tools/bmr">BMR & TDEE Calculator</a></li>
+    <li><a href="/tools/hr">Heart Rate Zones</a></li>
+    <li><a href="/tools/macros">Macro Calculator</a></li>
+  </ul>
+</section>
+<%- include('partials/footer') %>

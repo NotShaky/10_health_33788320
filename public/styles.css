@@ -1,0 +1,33 @@
+* { box-sizing: border-box; }
+:root {
+	--bg: #0f172a; /* slate-900 */
+	--panel: #111827; /* gray-900 */
+	--text: #e5e7eb; /* gray-200 */
+	--muted: #9ca3af; /* gray-400 */
+	--primary: #22c55e; /* green-500 */
+	--primary-dark: #16a34a; /* green-600 */
+	--accent: #38bdf8; /* sky-400 */
+	--danger-bg: #7f1d1d; /* red-900 */
+	--danger: #fecaca; /* red-200 */
+	--border: #374151; /* gray-700 */
+}
+body { font-family: system-ui, Arial, sans-serif; margin: 0; background: var(--bg); color: var(--text); }
+header { display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; background: var(--panel); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 10; }
+nav a { margin-right: 12px; text-decoration: none; color: var(--text); padding: 6px 8px; border-radius: 6px; }
+nav a:hover { background: #0b1220; }
+main { max-width: 900px; margin: 24px auto; padding: 0 20px; }
+.btn { display: inline-block; padding: 8px 12px; background: var(--primary); color: #04110a; border-radius: 6px; text-decoration: none; font-weight: 600; }
+.btn:hover { background: var(--primary-dark); color: #031307; }
+form { display: grid; gap: 12px; max-width: 600px; background: var(--panel); padding: 16px; border: 1px solid var(--border); border-radius: 8px; }
+label { display: grid; gap: 6px; }
+input, textarea, button { padding: 8px; border: 1px solid var(--border); border-radius: 6px; background: #0b1220; color: var(--text); }
+input::placeholder, textarea::placeholder { color: var(--muted); }
+button { background: var(--accent); color: #031022; cursor: pointer; font-weight: 600; }
+button:hover { background: #0ea5e9; color: #030d1d; }
+.error { background: var(--danger-bg); color: var(--danger); padding: 8px; border-radius: 6px; border: 1px solid #b91c1c; }
+.table { width: 100%; border-collapse: collapse; background: var(--panel); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.table th, .table td { border-bottom: 1px solid var(--border); padding: 10px; }
+.table thead th { background: #0b1220; color: var(--muted); text-align: left; }
+footer { text-align: center; padding: 20px; color: var(--muted); }
+.search-form { display: flex; gap: 8px; }
+.links { display: flex; gap: 10px; }

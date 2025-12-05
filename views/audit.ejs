@@ -1,0 +1,78 @@
+<%- include('partials/layout', { title: 'Audit', user: (typeof user !== 'undefined' ? user : null) }) %>
+<section>
+  <h1>Audit</h1>
+
+  <% if (typeof error !== 'undefined' && error) { %>
+    <div class="error"><%= error %></div>
+  <% } %>
+
+  <div class="cards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;">
+    <div class="card" style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:12px;">
+      <h3>Total Achievements</h3>
+      <p style="font-size:28px;margin:0;"><%= total %></p>
+    </div>
+  </div>
+
+  <h2>By Category</h2>
+  <% if (byCategory && byCategory.length) { %>
+    <table class="table">
+      <thead>
+        <tr><th>Category</th><th>Count</th></tr>
+      </thead>
+      <tbody>
+        <% byCategory.forEach(row => { %>
+          <tr>
+            <td><%= row.category %></td>
+            <td><%= row.count %></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  <% } else { %>
+    <p>No data yet.</p>
+  <% } %>
+
+  <h2>Sum by Metric</h2>
+  <% if (byMetricSum && byMetricSum.length) { %>
+    <table class="table">
+      <thead>
+        <tr><th>Metric</th><th>Total</th></tr>
+      </thead>
+      <tbody>
+        <% byMetricSum.forEach(row => { %>
+          <tr>
+            <td><%= row.metric %></td>
+            <td><%= row.total %></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  <% } else { %>
+    <p>No totals yet.</p>
+  <% } %>
+
+  <h2>Recent Activity</h2>
+  <% if (recent && recent.length) { %>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>When</th><th>Title</th><th>Category</th><th>Metric</th><th>Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% recent.forEach(a => { %>
+          <tr>
+            <td><%= new Date(a.created_at).toLocaleString() %></td>
+            <td><%= a.title %></td>
+            <td><%= a.category %></td>
+            <td><%= a.metric %></td>
+            <td><%= a.amount %></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  <% } else { %>
+    <p>No recent achievements.</p>
+  <% } %>
+</section>
+<%- include('partials/footer') %>

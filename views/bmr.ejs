@@ -1,0 +1,43 @@
+<%- include('partials/layout', { title: 'BMR & TDEE', user: (typeof user !== 'undefined' ? user : null) }) %>
+<section>
+  <h1>BMR & TDEE</h1>
+  <% if (error) { %><div class="error"><%= error %></div><% } %>
+  <form method="post" action="/tools/bmr" class="form" style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap;">
+    <div>
+      <label>Sex</label>
+      <select name="sex">
+        <option value="male" <%= form.sex==='male'?'selected':'' %>>Male</option>
+        <option value="female" <%= form.sex==='female'?'selected':'' %>>Female</option>
+      </select>
+    </div>
+    <div>
+      <label>Age (years)</label>
+      <input type="text" name="age" value="<%= form.age %>" />
+    </div>
+    <div>
+      <label>Height (cm)</label>
+      <input type="text" name="height" value="<%= form.height %>" />
+    </div>
+    <div>
+      <label>Weight (kg)</label>
+      <input type="text" name="weight" value="<%= form.weight %>" />
+    </div>
+    <div>
+      <label>Activity</label>
+      <select name="activity">
+        <option value="sedentary" <%= form.activity==='sedentary'?'selected':'' %>>Sedentary</option>
+        <option value="light" <%= form.activity==='light'?'selected':'' %>>Light</option>
+        <option value="moderate" <%= form.activity==='moderate'?'selected':'' %>>Moderate</option>
+        <option value="active" <%= form.activity==='active'?'selected':'' %>>Active</option>
+        <option value="very" <%= form.activity==='very'?'selected':'' %>>Very active</option>
+      </select>
+    </div>
+    <button type="submit">Calculate</button>
+  </form>
+  <% if (result) { %>
+    <div class="info" style="margin-top:12px;">
+      <strong>BMR:</strong> <%= result.bmr %> kcal/day — <strong>TDEE:</strong> <%= result.tdee %> kcal/day (<%= result.activity %>)
+    </div>
+  <% } %>
+</section>
+<%- include('partials/footer') %>

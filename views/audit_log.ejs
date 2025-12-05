@@ -1,0 +1,36 @@
+<%- include('partials/layout', { title: 'Audit Log', user: (typeof user !== 'undefined' ? user : null) }) %>
+<section>
+  <h1>Audit Log</h1>
+  <% if (typeof error !== 'undefined' && error) { %>
+    <div class="error"><%= error %></div>
+  <% } %>
+  <% if (!logs || !logs.length) { %>
+    <p>No audit entries yet.</p>
+  <% } else { %>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>User</th>
+          <th>Action</th>
+          <th>Details</th>
+          <th>IP</th>
+          <th>User Agent</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% logs.forEach(l => { %>
+          <tr>
+            <td><%= new Date(l.created_at).toLocaleString() %></td>
+            <td><%= l.username || '-' %></td>
+            <td><%= l.action %></td>
+            <td style="max-width:420px;overflow-wrap:anywhere;"><%= l.details || '' %></td>
+            <td><%= l.ip || '' %></td>
+            <td style="max-width:420px;overflow-wrap:anywhere;"><%= l.user_agent || '' %></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  <% } %>
+</section>
+<%- include('partials/footer') %>

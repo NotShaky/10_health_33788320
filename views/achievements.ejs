@@ -1,0 +1,77 @@
+<%- include('partials/layout', { title: 'Achievements', user: (typeof user !== 'undefined' ? user : null) }) %>
+<section>
+  <h1>Achievements</h1>
+  <form method="get" action="/achievements/search" class="search-form">
+    <input type="text" name="q" placeholder="Search by title, category, notes" value="<%= query %>" />
+    <button type="submit">Search</button>
+  </form>
+  <% if (typeof error !== 'undefined' && error) { %>
+    <div class="error"><%= error %></div>
+  <% } %>
+  <% if (typeof message !== 'undefined' && message) { %>
+    <div class="info"><%= message %></div>
+  <% } %>
+  <% if (achievements && achievements.length) { %>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Title</th>
+          <th>Category</th>
+          <th>Metric</th>
+          <th>Amount</th>
+          <th>Notes</th>
+          <th>Date</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% achievements.forEach(a => { %>
+          <tr>
+            <td><%= a.title %></td>
+            <td><%= a.category %></td>
+            <td><%= a.metric %></td>
+            <td><%= a.amount %></td>
+            <td><%= a.notes || '' %></td>
+            <td><%= new Date(a.created_at).toLocaleString() %></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  <% } else { %>
+    <p>No achievements found.</p>
+  <% } %>
+  <% if (user) { %>
+    <div style="margin-top:12px; display:flex; gap:8px; align-items:center;">
+      <a class="button" href="/achievements/export.csv">Export CSV</a>
+    </div>
+  <% } %>
+  <% if (typeof trends !== 'undefined' && trends && trends.length) { %>
+    <h2>Weekly Trend (last 8 weeks)</h2>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Year</th>
+          <th>Week</th>
+          <th>Count</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% trends.forEach(t => { %>
+          <tr>
+            <td><%= t.year %></td>
+            <td><%= t.week %></td>
+            <td><%= t.count %></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+    <div class="sparkline" style="display:flex; gap:4px; align-items:flex-end; height:60px; margin-top:8px;">
+      <% const maxCount = Math.max.apply(null, trends.map(t => t.count)); %>
+      <% trends.forEach(t => { %>
+        <% const h = maxCount > 0 ? Math.round((t.count / maxCount) * 56) : 4; %>
+        <div title="Week <%= t.week %> - <%= t.count %>"
+             style="width:14px; background: var(--accent-color, #4caf50); height:<%= h %>px; border-radius:3px; opacity:<%= t.count > 0 ? 1 : 0.4 %>"></div>
+      <% }) %>
+    </div>
+  <% } %>
+</section>
+<%- include('partials/footer') %>

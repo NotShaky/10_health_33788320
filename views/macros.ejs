@@ -1,0 +1,34 @@
+<%- include('partials/layout', { title: 'Macro Calculator', user: (typeof user !== 'undefined' ? user : null) }) %>
+<section>
+  <h1>Macro Calculator</h1>
+  <% if (error) { %><div class="error"><%= error %></div><% } %>
+  <form method="post" action="/tools/macros" class="form" style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap;">
+    <div>
+      <label>Maintenance calories (TDEE)</label>
+      <input type="text" name="calories" value="<%= form.calories %>" />
+    </div>
+    <div>
+      <label>Goal</label>
+      <select name="goal">
+        <option value="cut" <%= form.goal==='cut'?'selected':'' %>>Cut (-15%)</option>
+        <option value="maintain" <%= form.goal==='maintain'?'selected':'' %>>Maintain</option>
+        <option value="bulk" <%= form.goal==='bulk'?'selected':'' %>>Bulk (+15%)</option>
+      </select>
+    </div>
+    <button type="submit">Calculate</button>
+  </form>
+  <% if (result) { %>
+    <div class="info" style="margin-top:12px;">
+      <strong>Target calories:</strong> <%= result.calories %> kcal
+    </div>
+    <table class="table" style="margin-top:8px;">
+      <thead><tr><th>Macro</th><th>Grams/day</th></tr></thead>
+      <tbody>
+        <tr><td>Protein</td><td><%= result.protein_g %> g</td></tr>
+        <tr><td>Carbs</td><td><%= result.carbs_g %> g</td></tr>
+        <tr><td>Fat</td><td><%= result.fat_g %> g</td></tr>
+      </tbody>
+    </table>
+  <% } %>
+</section>
+<%- include('partials/footer') %>

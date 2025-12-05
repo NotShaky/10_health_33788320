@@ -1,0 +1,22 @@
+{
+  "name": "health-fitness-app",
+  "version": "1.0.0",
+  "description": "Health & Fitness app for coursework using Node.js, Express, EJS, MySQL",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bcrypt": "5.1.1",
+    "dotenv": "16.4.5",
+    "ejs": "3.1.10",
+    "express": "4.19.2",
+    "express-session": "1.17.3",
+    "morgan": "1.10.0",
+    "multer": "^2.0.2",
+    "mysql2": "3.11.3",
+    "nodemon": "^3.1.11"
+  }
+}

@@ -1,0 +1,5 @@
+home=
+about=
+achievements=
+search=
+add_achievement=

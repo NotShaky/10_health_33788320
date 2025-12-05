@@ -1,0 +1,18 @@
+<%- include('partials/layout', { title: 'Login', user: null }) %>
+<section>
+  <h1>Login</h1>
+  <% if (error) { %>
+    <div class="error"><%= error %></div>
+  <% } %>
+  <form method="post" action="/login">
+    <label>Username
+      <input type="text" name="username" required />
+    </label>
+    <label>Password
+      <input type="password" name="password" required />
+    </label>
+    <button type="submit">Login</button>
+  </form>
+  <p>Use username: <code>gold</code> and password: <code>smiths</code>.</p>
+</section>
+<%- include('partials/footer') %>

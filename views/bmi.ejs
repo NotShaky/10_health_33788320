@@ -1,0 +1,32 @@
+<%- include('partials/layout', { title: 'BMI Calculator', user: (typeof user !== 'undefined' ? user : null) }) %>
+<section>
+  <h1>BMI Calculator</h1>
+  <% if (error) { %>
+    <div class="error"><%= error %></div>
+  <% } %>
+  <form method="post" action="/tools/bmi" class="form" style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap;">
+    <div>
+      <label for="unit">Units</label>
+      <select id="unit" name="unit">
+        <option value="metric" <%= unit==='metric'?'selected':'' %>>Metric (m, kg)</option>
+        <option value="imperial" <%= unit==='imperial'?'selected':'' %>>Imperial (in, lb)</option>
+      </select>
+    </div>
+    <div>
+      <label for="height">Height (<%= unit==='imperial'?'in':'m' %>)</label>
+      <input type="text" id="height" name="height" value="<%= height %>" placeholder="<%= unit==='imperial'?'e.g. 69':'e.g. 1.75' %>" />
+    </div>
+    <div>
+      <label for="weight">Weight (<%= unit==='imperial'?'lb':'kg' %>)</label>
+      <input type="text" id="weight" name="weight" value="<%= weight %>" placeholder="<%= unit==='imperial'?'e.g. 150':'e.g. 68' %>" />
+    </div>
+    <button type="submit">Calculate</button>
+  </form>
+  <% if (result) { %>
+    <div class="info" style="margin-top:12px;">
+      <strong>BMI:</strong> <%= result.bmi %> — <strong><%= result.category %></strong>
+    </div>
+  <% } %>
+  <p style="margin-top:12px; font-size:0.9em; opacity:0.8;">Categories: Underweight (&lt;18.5), Normal (18.5–24.9), Overweight (25–29.9), Obese (≥30).</p>
+</section>
+<%- include('partials/footer') %>
