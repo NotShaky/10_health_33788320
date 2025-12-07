@@ -38,13 +38,20 @@ function rateLimit({ windowMs = 60_000, max = 10 }) {
 
 const app = express();
 const PORT = 8000;
+// Support deployment under a subpath (e.g., /usr/361)
+const BASE_PATH = (process.env.HEALTH_BASE_PATH || '').replace(/"/g, '').trim();
 const router = express.Router();
 
 // Middleware
 app.use(morgan('dev'));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
+// Serve static files; if deployed under a base path, serve there as well
+if (BASE_PATH) {
+  app.use(BASE_PATH, express.static(path.join(__dirname, 'public')));
+} else {
+  app.use(express.static(path.join(__dirname, 'public')));
+}
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
@@ -66,6 +73,12 @@ app.use(
     cookie: { maxAge: 1000 * 60 * 60 }
   })
 );
+
+// Expose base path to all views
+app.use((req, res, next) => {
+  res.locals.basePath = BASE_PATH || '';
+  next();
+});
 
 // Simple auth middleware for optional login
 function requireAuth(req, res, next) {
@@ -252,7 +265,7 @@ router.post('/tools/water', (req, res) => {
 
 // Period logger
 // Redirect old tools path to new section
-router.get('/tools/period', (req, res) => res.redirect(301, '/period'));
+router.get('/tools/period', (req, res) => res.redirect(301, `${res.locals.basePath}/period`));
 
 router.get('/period', requireAuth, async (req, res) => {
   audit.log(req, 'view_period');
@@ -303,8 +316,7 @@ router.post('/period', requireAuth, async (req, res) => {
     }
     await db.query('INSERT INTO period_logs (user_id, start_date, cycle_length) VALUES (?, ?, ?)', [userId, startDate, cycleLen]);
     audit.log(req, 'period_add', { start_date: startDate, cycle_length: cycleLen });
-    const bp1 = res.locals.basePath || '';
-    res.redirect(`${bp1}/period`);
+    res.redirect('/period');
   } catch (err) {
     console.error('Period add error:', err);
     audit.log(req, 'period_error', { error: err.message });
@@ -361,8 +373,7 @@ router.post('/register', rateLimit({ windowMs: 60_000, max: 5 }), async (req, re
     const hash = await bcrypt.hash(password, 10);
     await db.query('INSERT INTO users (username, password_hash) VALUES (?, ?)', [safeUsername, hash]);
     audit.log(req, 'register_success', { username: safeUsername });
-    const bp4 = res.locals.basePath || '';
-    return res.redirect(`${bp4}/login`);
+    return res.redirect('/login');
   } catch (err) {
     console.error('Register error:', err.message);
     audit.log(req, 'register_failed', { reason: 'server_error', error: err.message });
@@ -496,8 +507,7 @@ router.post('/login', rateLimit({ windowMs: 60_000, max: 10 }), async (req, res)
     }
     req.session.user = { id: userRow.id, username: userRow.username };
     audit.log(req, 'login_success', { username: safeUsername });
-    const bp5 = res.locals.basePath || '';
-    return res.redirect(`${bp5}/`);
+    return res.redirect('/');
   } catch (err) {
     console.error('Login error:', err.message);
     audit.log(req, 'login_failed', { reason: 'server_error', error: err.message });
@@ -795,12 +805,18 @@ router.post('/meds', requireAuth, async (req, res) => {
 });
 
 // 404 (keep this last)
-app.use('/', router);
+// Mount router under base path if provided
+if (BASE_PATH) {
+  app.use(BASE_PATH, router);
+} else {
+  app.use('/', router);
+}
 app.use((req, res) => {
   audit.log(req, 'not_found', { url: req.originalUrl });
   res.status(404).render('404', { user: req.session.user || null });
 });
 
 app.listen(PORT, () => {
-  console.log(`App running on http://localhost:${PORT}`);
+  const base = BASE_PATH || '';
+  console.log(`App running on http://localhost:${PORT}${base}`);
 });
