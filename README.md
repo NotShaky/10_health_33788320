@@ -4,9 +4,8 @@ Node.js + Express + EJS + MySQL coursework app.
 
 ## Install
 
-1. Create `.env` from `.env.example` with your MySQL settings.
+1. Create `.env` from `.env` with your MySQL settings.
 	 - `HEALTH_HOST`, `HEALTH_USER`, `HEALTH_PASSWORD`, `HEALTH_DATABASE`
-	 - `HEALTH_BASE_PATH` (optional), `SESSION_SECRET`
  	 - Do not commit `.env` — it's ignored by `.gitignore`.
 2. Create DB and seed data:
 
@@ -45,13 +44,25 @@ App runs on `http://localhost:8000`.
 - Period Tracker:
 	- `GET /period` to view logs and next estimated window
 	- `POST /period` to add a period start date and cycle length
+	- Calendar view with previous/next month navigation and color legend
 	- Table `period_logs` is created via `sql/create_db.sql`
+- Medication Tracker:
+	- `GET /meds` and `POST /meds` (auth required)
+	- Supports frequency types: interval (every N hours), daily (HH:MM), weekly (days + time)
+	- Suggests upcoming dose times and shows next due
+- Fitness Tools:
+	- BMI calculator (metric/imperial)
+	- BMR/TDEE calculator (Mifflin-St Jeor)
+	- Heart rate zones
+	- Macro calculator
+	- Water intake calculator with units, activity, climate
 
 ## Security
 
 - Input sanitization: all textbox inputs (login/register username, achievement fields, search) are sanitized server-side via `src/sanitize.js` to mitigate XSS and unsafe content in the database.
 - Output escaping: EJS escapes variables by default; templates avoid rendering raw HTML from user input.
 - Rate limiting: applied to sensitive endpoints to reduce brute-force attempts.
+ - Router-based routing: all endpoints defined via `express.Router()` for cleaner structure.
 
 ## Deployment
 Update `links.txt` with your deployed URLs.
