@@ -12,8 +12,24 @@
       <input type="text" name="dosage" value="<%= form.dosage %>" placeholder="e.g., 500 mg" />
     </div>
     <div>
+      <label>Frequency</label>
+      <select name="freq_type">
+        <option value="interval" <%= form.freq_type==='interval'?'selected':'' %>>Every N hours</option>
+        <option value="daily" <%= form.freq_type==='daily'?'selected':'' %>>Daily at time</option>
+        <option value="weekly" <%= form.freq_type==='weekly'?'selected':'' %>>Weekly on days</option>
+      </select>
+    </div>
+    <div id="interval_fields">
       <label>Interval (hours)</label>
       <input type="number" name="interval_hours" min="1" max="48" value="<%= form.interval_hours %>" />
+    </div>
+    <div id="daily_fields">
+      <label>Time of day (HH:MM)</label>
+      <input type="text" name="time_of_day" value="<%= form.time_of_day %>" placeholder="08:00" />
+    </div>
+    <div id="weekly_fields">
+      <label>Days of week (e.g., Mon,Thu)</label>
+      <input type="text" name="days_of_week" value="<%= form.days_of_week %>" placeholder="Mon,Thu" />
     </div>
     <div style="flex:1;">
       <label>Notes</label>
@@ -22,21 +38,56 @@
     <button type="submit">Add Medication</button>
   </form>
 
+  <script>
+    (function(){
+      const freqSel = document.querySelector('select[name="freq_type"]');
+      const intervalEl = document.getElementById('interval_fields');
+      const dailyEl = document.getElementById('daily_fields');
+      const weeklyEl = document.getElementById('weekly_fields');
+      function updateVisibility(){
+        const v = freqSel.value;
+        intervalEl.style.display = v === 'interval' ? '' : 'none';
+        dailyEl.style.display = v === 'daily' ? '' : 'none';
+        weeklyEl.style.display = v === 'weekly' ? '' : 'none';
+      }
+      freqSel.addEventListener('change', updateVisibility);
+      updateVisibility();
+    })();
+  </script>
+
   <h3 style="margin-top:16px;">Your Medications</h3>
   <table class="table">
-    <thead><tr><th>Name</th><th>Dosage</th><th>Interval (h)</th><th>Suggested times (next 24h)</th></tr></thead>
+    <thead><tr><th>Name</th><th>Dosage</th><th>Frequency</th><th>Details</th><th>Next due</th><th>Upcoming</th></tr></thead>
     <tbody>
       <% if (meds && meds.length) { %>
         <% meds.forEach(m => { %>
           <tr>
             <td><%= m.name %></td>
             <td><%= m.dosage || '' %></td>
-            <td><%= m.interval_hours %></td>
+            <td><%= m.freq_type %></td>
+            <td>
+              <% if (m.freq_type === 'interval') { %>
+                Every <%= m.interval_hours %> hours
+              <% } else if (m.freq_type === 'daily') { %>
+                Daily at <%= m.time_of_day %>
+              <% } else if (m.freq_type === 'weekly') { %>
+                Weekly (<%= m.days_of_week %>) at <%= m.time_of_day %>
+              <% } %>
+            </td>
+            <td>
+              <% if (m.nextDue) { %>
+                <span style="padding:4px 8px; border:1px solid var(--border); border-radius:6px; background:#7f1d1d22; color:#ef4444; font-weight:600;">
+                  <%= m.nextDue.toLocaleString() %>
+                </span>
+              <% } else { %>
+                —
+              <% } %>
+            </td>
             <td>
               <% if (m.schedule && m.schedule.length) { %>
                 <div style="display:flex; gap:6px; flex-wrap:wrap;">
-                  <% m.schedule.forEach(t => { %>
-                    <span style="padding:4px 8px; border:1px solid var(--border); border-radius:6px; background:#0b1220;"><%= t %></span>
+                  <% m.schedule.forEach(d => { %>
+                    <span style="padding:4px 8px; border:1px solid var(--border); border-radius:6px; background:#0b1220;"><%= d.toLocaleTimeString() %></span>
                   <% }) %>
                 </div>
               <% } else { %>
@@ -46,7 +97,7 @@
           </tr>
         <% }) %>
       <% } else { %>
-        <tr><td colspan="4">No medications added.</td></tr>
+        <tr><td colspan="6">No medications added.</td></tr>
       <% } %>
     </tbody>
   </table>

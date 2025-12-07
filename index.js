@@ -673,25 +673,58 @@ router.get('/meds', requireAuth, async (req, res) => {
   try {
     const userId = req.session.user.id;
     const [rows] = await db.query(
-      'SELECT id, name, dosage, interval_hours, notes, created_at FROM medications WHERE user_id = ? ORDER BY created_at DESC',
+      'SELECT id, name, dosage, interval_hours, freq_type, time_of_day, days_of_week, notes, created_at FROM medications WHERE user_id = ? ORDER BY created_at DESC',
       [userId]
     );
     // Build simple schedule suggestions: next 24h based on interval_hours
+    const weekdayIndex = { Sun:0, Mon:1, Tue:2, Wed:3, Thu:4, Fri:5, Sat:6 };
     const schedules = rows.map(m => {
-      const interval = m.interval_hours;
       const now = new Date();
-      const times = [];
-      for (let t = 0; t < 24; t += interval) {
-        const d = new Date(now);
-        d.setHours(now.getHours() + t, 0, 0, 0);
-        times.push(d.toLocaleTimeString());
+      let times = [];
+      let nextDue = null;
+      if (m.freq_type === 'interval') {
+        const interval = m.interval_hours;
+        for (let t = interval; t <= 24; t += interval) {
+          const d = new Date(now);
+          d.setHours(now.getHours() + t, 0, 0, 0);
+          times.push(d);
+        }
+        nextDue = times[0] || null;
+      } else if (m.freq_type === 'daily') {
+        const [hh, mm] = (m.time_of_day || '08:00').split(':').map(x => parseInt(x,10));
+        const today = new Date(now);
+        const todayDose = new Date(now);
+        todayDose.setHours(hh||8, mm||0, 0, 0);
+        if (todayDose > now) {
+          times.push(todayDose);
+        }
+        const tomorrow = new Date(now);
+        tomorrow.setDate(now.getDate() + 1);
+        const tomorrowDose = new Date(tomorrow);
+        tomorrowDose.setHours(hh||8, mm||0, 0, 0);
+        times.push(tomorrowDose);
+        nextDue = times[0] || null;
+      } else if (m.freq_type === 'weekly') {
+        const [hh, mm] = (m.time_of_day || '08:00').split(':').map(x => parseInt(x,10));
+        const days = (m.days_of_week || 'Mon,Thu').split(',').map(s => s.trim()).filter(Boolean);
+        for (let i = 0; i < 14; i++) {
+          const d = new Date(now);
+          d.setDate(now.getDate() + i);
+          const dayName = Object.keys(weekdayIndex)[d.getDay()];
+          if (days.includes(dayName)) {
+            d.setHours(hh||8, mm||0, 0, 0);
+            if (d > now) times.push(d);
+          }
+        }
+        times = times.slice(0, 4);
+        nextDue = times[0] || null;
       }
-      return { ...m, schedule: times };
+      return { ...m, schedule: times, nextDue };
     });
-    res.render('meds', { user: req.session.user || null, meds: schedules, error: null, form: { name: '', dosage: '', interval_hours: '', notes: '' } });
+    res.render('meds', { user: req.session.user || null, meds: schedules, error: null, form: { name: '', dosage: '', interval_hours: '', freq_type: 'interval', time_of_day: '08:00', days_of_week: 'Mon,Thu', notes: '' } });
   } catch (err) {
     console.error('Meds view error:', err);
-    res.status(500).render('meds', { user: req.session.user || null, meds: [], error: 'Unable to load medications.', form: { name: '', dosage: '', interval_hours: '', notes: '' } });
+    res.status(500).render('meds', { user: req.session.user || null, meds: [], error: 'Unable to load medications.', form: { name: '', dosage: '', interval_hours: '', freq_type: 'interval', time_of_day: '08:00', days_of_week: 'Mon,Thu', notes: '' } });
   }
 });
 
@@ -701,22 +734,42 @@ router.post('/meds', requireAuth, async (req, res) => {
     const name = sanitizeText(req.body.name || '', { maxLen: 100 });
     const dosage = sanitizeText(req.body.dosage || '', { maxLen: 100 });
     const notes = sanitizeText(req.body.notes || '', { maxLen: 500 });
+    const freqType = sanitizeText(req.body.freq_type || 'interval', { maxLen: 10 }).toLowerCase();
     const intervalHours = parseInt((req.body.interval_hours || '').trim(), 10);
+    const timeOfDay = sanitizeText(req.body.time_of_day || '08:00', { maxLen: 5 });
+    const daysOfWeek = sanitizeText(req.body.days_of_week || 'Mon,Thu', { maxLen: 50 });
     if (!name) {
-      return res.status(400).render('meds', { user: req.session.user || null, meds: [], error: 'Medication name is required.', form: { name, dosage, interval_hours: req.body.interval_hours || '', notes } });
+      return res.status(400).render('meds', { user: req.session.user || null, meds: [], error: 'Medication name is required.', form: { name, dosage, interval_hours: req.body.interval_hours || '', freq_type: freqType, time_of_day: timeOfDay, days_of_week: daysOfWeek, notes } });
     }
-    if (Number.isNaN(intervalHours) || intervalHours <= 0 || intervalHours > 48) {
-      return res.status(400).render('meds', { user: req.session.user || null, meds: [], error: 'Interval must be a number between 1 and 48 hours.', form: { name, dosage, interval_hours: req.body.interval_hours || '', notes } });
+    if (freqType === 'interval') {
+      if (Number.isNaN(intervalHours) || intervalHours <= 0 || intervalHours > 48) {
+        return res.status(400).render('meds', { user: req.session.user || null, meds: [], error: 'Interval must be a number between 1 and 48 hours.', form: { name, dosage, interval_hours: req.body.interval_hours || '', freq_type: freqType, time_of_day: timeOfDay, days_of_week: daysOfWeek, notes } });
+      }
+    } else if (freqType === 'daily') {
+      if (!/^\d{2}:\d{2}$/.test(timeOfDay)) {
+        return res.status(400).render('meds', { user: req.session.user || null, meds: [], error: 'Time of day must be HH:MM.', form: { name, dosage, interval_hours: '', freq_type: freqType, time_of_day: timeOfDay, days_of_week: '', notes } });
+      }
+    } else if (freqType === 'weekly') {
+      if (!/^\d{2}:\d{2}$/.test(timeOfDay)) {
+        return res.status(400).render('meds', { user: req.session.user || null, meds: [], error: 'Time of day must be HH:MM.', form: { name, dosage, interval_hours: '', freq_type: freqType, time_of_day: timeOfDay, days_of_week: daysOfWeek, notes } });
+      }
+      const validDays = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+      const days = daysOfWeek.split(',').map(s => s.trim()).filter(Boolean);
+      if (!days.length || !days.every(d => validDays.includes(d))) {
+        return res.status(400).render('meds', { user: req.session.user || null, meds: [], error: 'Days of week must be comma-separated (Sun,Mon,...)', form: { name, dosage, interval_hours: '', freq_type: freqType, time_of_day: timeOfDay, days_of_week: daysOfWeek, notes } });
+      }
+    } else {
+      return res.status(400).render('meds', { user: req.session.user || null, meds: [], error: 'Invalid frequency type.', form: { name, dosage, interval_hours: req.body.interval_hours || '', freq_type: freqType, time_of_day: timeOfDay, days_of_week: daysOfWeek, notes } });
     }
     await db.query(
-      'INSERT INTO medications (user_id, name, dosage, interval_hours, notes) VALUES (?, ?, ?, ?, ?)',
-      [userId, name, dosage || null, intervalHours, notes || null]
+      'INSERT INTO medications (user_id, name, dosage, interval_hours, freq_type, time_of_day, days_of_week, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      [userId, name, dosage || null, freqType==='interval'? intervalHours : null, freqType, freqType!=='interval'? timeOfDay : null, freqType==='weekly'? daysOfWeek : null, notes || null]
     );
     audit.log(req, 'add_medication', { name, intervalHours });
     res.redirect('/meds');
   } catch (err) {
     console.error('Add med error:', err);
-    res.status(500).render('meds', { user: req.session.user || null, meds: [], error: 'Server error. Please try again.', form: { name: sanitizeText(req.body.name||'',{maxLen:100}), dosage: sanitizeText(req.body.dosage||'',{maxLen:100}), interval_hours: (req.body.interval_hours||''), notes: sanitizeText(req.body.notes||'',{maxLen:500}) } });
+    res.status(500).render('meds', { user: req.session.user || null, meds: [], error: 'Server error. Please try again.', form: { name: sanitizeText(req.body.name||'',{maxLen:100}), dosage: sanitizeText(req.body.dosage||'',{maxLen:100}), interval_hours: (req.body.interval_hours||''), freq_type: sanitizeText(req.body.freq_type||'interval',{maxLen:10}), time_of_day: sanitizeText(req.body.time_of_day||'',{maxLen:5}), days_of_week: sanitizeText(req.body.days_of_week||'',{maxLen:50}), notes: sanitizeText(req.body.notes||'',{maxLen:500}) } });
   }
 });
 

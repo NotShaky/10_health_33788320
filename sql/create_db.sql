@@ -53,6 +53,9 @@ CREATE TABLE IF NOT EXISTS medications (
   name VARCHAR(100) NOT NULL,
   dosage VARCHAR(100) NULL,
   interval_hours INT NOT NULL, -- how often to take, in hours
+  freq_type ENUM('interval','daily','weekly') NOT NULL DEFAULT 'interval',
+  time_of_day VARCHAR(5) NULL, -- HH:MM for daily/weekly
+  days_of_week VARCHAR(50) NULL, -- comma-separated days e.g., Mon,Tue for weekly
   notes TEXT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT fk_med_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE

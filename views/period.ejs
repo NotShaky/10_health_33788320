@@ -69,18 +69,13 @@
           </div>
         <% } %>
       </div>
-      <% if (nextWindow) { %>
-        <div class="info" style="margin-top:8px;">
-          Highlighted in light red: <strong><%= nextWindow.start %></strong> to <strong><%= nextWindow.end %></strong>
-        </div>
-      <% } %>
+        <div style="display:flex; gap:12px; align-items:center; margin:8px 0 12px;">
+        <span style="display:inline-flex; align-items:center; gap:6px;"><span style="width:14px; height:14px; background:#0ea5e933; border:1px solid #0ea5e9; border-radius:3px; display:inline-block;"></span> Start dates</span>
+        <span style="display:inline-flex; align-items:center; gap:6px;"><span style="width:14px; height:14px; background:#ef444433; border:1px solid #ef4444; border-radius:3px; display:inline-block;"></span> Estimated window</span>
+      </div>
     </div>
   <% } %>
-  <% if (nextWindow) { %>
-    <div class="info" style="margin-top:12px;">
-      <strong>Estimated next period:</strong> <%= nextWindow.start %> to <%= nextWindow.end %> (cycle <%= nextWindow.cycle %>d)
-    </div>
-  <% } %>
+  
   <h3 style="margin-top:16px;">Recent Logs</h3>
   <table class="table">
     <thead><tr><th>Start date</th><th>Cycle length (days)</th></tr></thead>
