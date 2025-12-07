@@ -1,0 +1,54 @@
+<%- include('partials/layout', { title: 'Medication Tracker', user: (typeof user !== 'undefined' ? user : null) }) %>
+<section>
+  <h1>Medication Tracker</h1>
+  <% if (error) { %><div class="error"><%= error %></div><% } %>
+  <form method="post" action="/meds" class="form" style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap;">
+    <div>
+      <label>Medication name</label>
+      <input type="text" name="name" value="<%= form.name %>" />
+    </div>
+    <div>
+      <label>Dosage</label>
+      <input type="text" name="dosage" value="<%= form.dosage %>" placeholder="e.g., 500 mg" />
+    </div>
+    <div>
+      <label>Interval (hours)</label>
+      <input type="number" name="interval_hours" min="1" max="48" value="<%= form.interval_hours %>" />
+    </div>
+    <div style="flex:1;">
+      <label>Notes</label>
+      <input type="text" name="notes" value="<%= form.notes %>" />
+    </div>
+    <button type="submit">Add Medication</button>
+  </form>
+
+  <h3 style="margin-top:16px;">Your Medications</h3>
+  <table class="table">
+    <thead><tr><th>Name</th><th>Dosage</th><th>Interval (h)</th><th>Suggested times (next 24h)</th></tr></thead>
+    <tbody>
+      <% if (meds && meds.length) { %>
+        <% meds.forEach(m => { %>
+          <tr>
+            <td><%= m.name %></td>
+            <td><%= m.dosage || '' %></td>
+            <td><%= m.interval_hours %></td>
+            <td>
+              <% if (m.schedule && m.schedule.length) { %>
+                <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                  <% m.schedule.forEach(t => { %>
+                    <span style="padding:4px 8px; border:1px solid var(--border); border-radius:6px; background:#0b1220;"><%= t %></span>
+                  <% }) %>
+                </div>
+              <% } else { %>
+                <span>—</span>
+              <% } %>
+            </td>
+          </tr>
+        <% }) %>
+      <% } else { %>
+        <tr><td colspan="4">No medications added.</td></tr>
+      <% } %>
+    </tbody>
+  </table>
+</section>
+<%- include('partials/footer') %>

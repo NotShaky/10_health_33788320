@@ -38,6 +38,7 @@ function rateLimit({ windowMs = 60_000, max = 10 }) {
 
 const app = express();
 const PORT = 8000;
+const router = express.Router();
 
 // Middleware
 app.use(morgan('dev'));
@@ -63,28 +64,28 @@ function requireAuth(req, res, next) {
 }
 
 // Routes
-app.get('/', async (req, res) => {
+router.get('/', async (req, res) => {
   audit.log(req, 'view_home');
   res.render('home', { user: req.session.user || null });
 });
 
-app.get('/about', (req, res) => {
+router.get('/about', (req, res) => {
   audit.log(req, 'view_about');
   res.render('about', { user: req.session.user || null });
 });
 
 // Fitness tools
-app.get('/tools', (req, res) => {
+router.get('/tools', (req, res) => {
   audit.log(req, 'view_tools');
   res.render('tools', { user: req.session.user || null });
 });
 
-app.get('/tools/bmi', (req, res) => {
+router.get('/tools/bmi', (req, res) => {
   audit.log(req, 'view_bmi');
   res.render('bmi', { user: req.session.user || null, result: null, error: null, height: '', weight: '', unit: 'metric' });
 });
 
-app.post('/tools/bmi', (req, res) => {
+router.post('/tools/bmi', (req, res) => {
   try {
     const heightStr = sanitizeText(req.body.height || '', { maxLen: 10 });
     const weightStr = sanitizeText(req.body.weight || '', { maxLen: 10 });
@@ -119,12 +120,12 @@ app.post('/tools/bmi', (req, res) => {
 });
 
 // BMR & TDEE (Mifflin-St Jeor)
-app.get('/tools/bmr', (req, res) => {
+router.get('/tools/bmr', (req, res) => {
   audit.log(req, 'view_bmr');
   res.render('bmr', { user: req.session.user || null, result: null, error: null, form: { sex: 'male', age: '', height: '', weight: '', activity: 'moderate' } });
 });
 
-app.post('/tools/bmr', (req, res) => {
+router.post('/tools/bmr', (req, res) => {
   try {
     const sex = sanitizeText(req.body.sex || 'male', { maxLen: 10 }).toLowerCase();
     const age = parseInt((req.body.age || '').trim(), 10);
@@ -152,12 +153,12 @@ app.post('/tools/bmr', (req, res) => {
 });
 
 // Heart rate zones
-app.get('/tools/hr', (req, res) => {
+router.get('/tools/hr', (req, res) => {
   audit.log(req, 'view_hr');
   res.render('hr', { user: req.session.user || null, result: null, error: null, age: '' });
 });
 
-app.post('/tools/hr', (req, res) => {
+router.post('/tools/hr', (req, res) => {
   const age = parseInt((req.body.age || '').trim(), 10);
   if (Number.isNaN(age) || age <= 0) {
     audit.log(req, 'hr_failed');
@@ -176,12 +177,12 @@ app.post('/tools/hr', (req, res) => {
 });
 
 // Macro calculator
-app.get('/tools/macros', (req, res) => {
+router.get('/tools/macros', (req, res) => {
   audit.log(req, 'view_macros');
   res.render('macros', { user: req.session.user || null, result: null, error: null, form: { calories: '', goal: 'maintain' } });
 });
 
-app.post('/tools/macros', (req, res) => {
+router.post('/tools/macros', (req, res) => {
   const calories = parseInt((req.body.calories || '').trim(), 10);
   const goal = (req.body.goal || 'maintain').toLowerCase();
   if (Number.isNaN(calories) || calories <= 0) {
@@ -202,9 +203,107 @@ app.post('/tools/macros', (req, res) => {
   res.render('macros', { user: req.session.user || null, result, error: null, form: { calories, goal } });
 });
 
+// Water intake calculator
+router.get('/tools/water', (req, res) => {
+  audit.log(req, 'view_water');
+  res.render('water', { user: req.session.user || null, result: null, error: null, form: { weight: '', unit: 'metric', activity: 'moderate', climate: 'temperate' } });
+});
+
+router.post('/tools/water', (req, res) => {
+  try {
+    const unit = (req.body.unit || 'metric').trim();
+    const weightStr = (req.body.weight || '').trim();
+    const activity = (req.body.activity || 'moderate').trim();
+    const climate = (req.body.climate || 'temperate').trim();
+
+    const weightNum = parseFloat(weightStr);
+    if (Number.isNaN(weightNum) || weightNum <= 0) {
+      audit.log(req, 'water_failed');
+      return res.status(400).render('water', { user: req.session.user || null, result: null, error: 'Enter a valid weight.', form: { weight: weightStr, unit, activity, climate } });
+    }
+
+    const weightKg = unit === 'imperial' ? weightNum * 0.45359237 : weightNum;
+    let ml = weightKg * 35;
+    const activityAdd = { sedentary: 0, light: 300, moderate: 700, active: 1200, very: 1800 }[activity] ?? 700;
+    ml += activityAdd;
+    const climateAdd = { temperate: 0, warm: 400, hot: 900 }[climate] ?? 0;
+    ml += climateAdd;
+    ml = Math.max(1500, Math.min(6000, Math.round(ml)));
+    const liters = (ml / 1000).toFixed(2);
+    const cups = (ml / 240).toFixed(1);
+    audit.log(req, 'water_success', { unit, weight: weightNum, activity, climate, ml });
+    return res.render('water', { user: req.session.user || null, result: { ml, liters, cups }, error: null, form: { weight: weightStr, unit, activity, climate } });
+  } catch (err) {
+    console.error('Water calc error:', err);
+    audit.log(req, 'water_error', { error: err.message });
+    return res.status(500).render('water', { user: req.session.user || null, result: null, error: 'Something went wrong. Try again.', form: { weight: (req.body.weight||'').trim(), unit: (req.body.unit||'metric').trim(), activity: (req.body.activity||'moderate').trim(), climate: (req.body.climate||'temperate').trim() } });
+  }
+});
+
+// Period logger
+// Redirect old tools path to new section
+router.get('/tools/period', (req, res) => res.redirect(301, '/period'));
+
+router.get('/period', requireAuth, async (req, res) => {
+  audit.log(req, 'view_period');
+  try {
+    const userId = req.session.user.id;
+    const [rows] = await db.query(
+      'SELECT id, start_date, cycle_length FROM period_logs WHERE user_id = ? ORDER BY start_date DESC LIMIT 12',
+      [userId]
+    );
+    // Estimate next period window based on latest entry
+    let nextWindow = null;
+    if (rows && rows.length) {
+      const latest = rows[0];
+      const start = new Date(latest.start_date);
+      const cycle = latest.cycle_length || 28;
+      const nextStart = new Date(start);
+      nextStart.setDate(nextStart.getDate() + cycle);
+      const nextEnd = new Date(nextStart);
+      nextEnd.setDate(nextEnd.getDate() + 5);
+      nextWindow = { start: nextStart.toISOString().slice(0,10), end: nextEnd.toISOString().slice(0,10), cycle };
+    }
+    // Calendar navigation support via query params
+    const qYear = parseInt((req.query.year || '').trim(), 10);
+    const qMonth = parseInt((req.query.month || '').trim(), 10); // 0-11
+    const now = new Date();
+    const calYear = Number.isInteger(qYear) ? qYear : now.getFullYear();
+    const calMonth = Number.isInteger(qMonth) && qMonth >= 0 && qMonth <= 11 ? qMonth : now.getMonth();
+    res.render('period', { user: req.session.user || null, logs: rows, error: null, form: { start_date: '', cycle_length: 28 }, nextWindow, calYear, calMonth });
+  } catch (err) {
+    console.error('Period view error:', err);
+    const now = new Date();
+    res.status(500).render('period', { user: req.session.user || null, logs: [], error: 'Unable to load period logs.', form: { start_date: '', cycle_length: 28 }, nextWindow: null, calYear: now.getFullYear(), calMonth: now.getMonth() });
+  }
+});
+
+router.post('/period', requireAuth, async (req, res) => {
+  try {
+    const userId = req.session.user.id;
+    const startDate = (req.body.start_date || '').trim();
+    const cycleLen = parseInt((req.body.cycle_length || '28').trim(), 10);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(startDate)) {
+      audit.log(req, 'period_failed', { reason: 'bad_date' });
+      return res.status(400).render('period', { user: req.session.user || null, logs: [], error: 'Enter a valid start date (YYYY-MM-DD).', form: { start_date: startDate, cycle_length: cycleLen || 28 }, nextWindow: null });
+    }
+    if (Number.isNaN(cycleLen) || cycleLen < 20 || cycleLen > 60) {
+      audit.log(req, 'period_failed', { reason: 'bad_cycle' });
+      return res.status(400).render('period', { user: req.session.user || null, logs: [], error: 'Cycle length must be between 20 and 60 days.', form: { start_date: startDate, cycle_length: cycleLen || 28 }, nextWindow: null });
+    }
+    await db.query('INSERT INTO period_logs (user_id, start_date, cycle_length) VALUES (?, ?, ?)', [userId, startDate, cycleLen]);
+    audit.log(req, 'period_add', { start_date: startDate, cycle_length: cycleLen });
+    res.redirect('/period');
+  } catch (err) {
+    console.error('Period add error:', err);
+    audit.log(req, 'period_error', { error: err.message });
+    res.status(500).render('period', { user: req.session.user || null, logs: [], error: 'Server error. Please try again.', form: { start_date: (req.body.start_date||'').trim(), cycle_length: parseInt((req.body.cycle_length||'28').trim(),10) || 28 }, nextWindow: null });
+  }
+});
+
 // Audit page: per-user activity summary
 // Registration
-app.get('/register', (req, res) => {
+router.get('/register', (req, res) => {
   if (req.session.user) return res.redirect('/');
   audit.log(req, 'view_register');
   res.render('register', { error: null, user: null });
@@ -220,7 +319,7 @@ function isValidPassword(pw) {
   return hasLower && hasUpper && hasDigit && hasSpecial;
 }
 
-app.post('/register', rateLimit({ windowMs: 60_000, max: 5 }), async (req, res) => {
+router.post('/register', rateLimit({ windowMs: 60_000, max: 5 }), async (req, res) => {
   try {
     if (req.session.user) return res.redirect('/');
     const { username, password, confirm } = req.body;
@@ -253,7 +352,7 @@ app.post('/register', rateLimit({ windowMs: 60_000, max: 5 }), async (req, res) 
   }
 });
 // Status route: DB connectivity and user check
-app.get('/status', async (req, res) => {
+router.get('/status', async (req, res) => {
   const result = { db: { connected: false }, userGold: { exists: false } };
   try {
     const [ping] = await db.query('SELECT 1 AS ok');
@@ -268,7 +367,7 @@ app.get('/status', async (req, res) => {
 });
 
 // CSV export of achievements for current user
-app.get('/achievements/export.csv', requireAuth, async (req, res) => {
+router.get('/achievements/export.csv', requireAuth, async (req, res) => {
   try {
     const userId = req.session.user.id;
     const [rows] = await db.query(
@@ -298,7 +397,7 @@ app.get('/achievements/export.csv', requireAuth, async (req, res) => {
 });
 
 // JSON API: GET achievements (paginated)
-app.get('/api/achievements', requireAuth, async (req, res) => {
+router.get('/api/achievements', requireAuth, async (req, res) => {
   try {
     const user = req.session.user;
     const page = Math.max(1, parseInt(req.query.page || '1', 10));
@@ -326,7 +425,7 @@ app.get('/api/achievements', requireAuth, async (req, res) => {
 });
 
 // JSON API: POST achievement (validation)
-app.post('/api/achievements', rateLimit({ windowMs: 60_000, max: 20 }), requireAuth, async (req, res) => {
+router.post('/api/achievements', rateLimit({ windowMs: 60_000, max: 20 }), requireAuth, async (req, res) => {
   try {
     const { title, category, metric, amount, notes } = req.body || {};
     const safeTitle = sanitizeText(title, { maxLen: 100 });
@@ -353,12 +452,12 @@ app.post('/api/achievements', rateLimit({ windowMs: 60_000, max: 20 }), requireA
   }
 });
 // Login
-app.get('/login', (req, res) => {
+router.get('/login', (req, res) => {
   audit.log(req, 'view_login');
   res.render('login', { error: null });
 });
 
-app.post('/login', rateLimit({ windowMs: 60_000, max: 10 }), async (req, res) => {
+router.post('/login', rateLimit({ windowMs: 60_000, max: 10 }), async (req, res) => {
   try {
     const { username, password } = req.body;
     const safeUsername = sanitizeText(username, { maxLen: 50 });
@@ -387,7 +486,7 @@ app.post('/login', rateLimit({ windowMs: 60_000, max: 10 }), async (req, res) =>
   }
 });
 
-app.post('/logout', (req, res) => {
+router.post('/logout', (req, res) => {
   audit.log(req, 'logout');
   req.session.destroy(() => {
     res.redirect('/');
@@ -395,7 +494,7 @@ app.post('/logout', (req, res) => {
 });
 
 // Health achievements: add + search
-app.get('/achievements', async (req, res) => {
+router.get('/achievements', async (req, res) => {
   try {
     const user = req.session.user || null;
     if (!user) {
@@ -419,31 +518,28 @@ app.get('/achievements', async (req, res) => {
       [...params, limit, offset]
     );
     const [[{ total }]] = await db.query(`SELECT COUNT(*) AS total FROM achievements WHERE ${where}`, params);
-    const [trendRows] = await db.query(
-      `SELECT YEARWEEK(created_at, 3) AS yw, COUNT(*) AS count
-       FROM achievements
-       WHERE user_id = ? AND created_at >= DATE_SUB(CURDATE(), INTERVAL 56 DAY)
-       GROUP BY YEARWEEK(created_at, 3)
-       ORDER BY yw DESC`,
-      [user.id]
-    );
-    const now = new Date();
-    const trends = [];
-    const byYW = new Map(trendRows.map(r => [String(r.yw), r.count]));
-    for (let i = 0; i < 8; i++) {
-      const d = new Date(now);
-      d.setDate(d.getDate() - i * 7);
-      const year = d.getUTCFullYear();
-      const tmp = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
-      const dayNum = (tmp.getUTCDay() + 6) % 7;
-      tmp.setUTCDate(tmp.getUTCDate() - dayNum + 3);
-      const firstThursday = new Date(Date.UTC(tmp.getUTCFullYear(), 0, 4));
-      const week = 1 + Math.round(((tmp.getTime() - firstThursday.getTime()) / 86400000 - 3) / 7);
-      const key = `${year}${String(week).padStart(2, '0')}`;
-      trends.unshift({ year, week, count: byYW.get(key) || 0 });
-    }
-    audit.log(req, 'view_achievements', { loggedIn: true, count: rows.length, page, limit });
-    res.render('achievements', { achievements: rows, query: '', user, page, limit, total, category, metric, trends });
+      let trends = [];
+      let thisWeekCount = 0;
+      if (user) {
+        const [trendRows] = await db.query(
+          `SELECT YEAR(created_at) AS year, WEEK(created_at, 3) AS week, COUNT(*) AS count
+           FROM achievements
+           WHERE user_id = ? AND created_at >= NOW() - INTERVAL 8 WEEK
+           GROUP BY YEAR(created_at), WEEK(created_at, 3)
+           ORDER BY year DESC, week DESC`,
+          [user.id]
+        );
+        trends = trendRows;
+        const [wk] = await db.query(
+          `SELECT COUNT(*) AS c
+           FROM achievements
+           WHERE user_id = ? AND YEARWEEK(created_at, 3) = YEARWEEK(NOW(), 3)`,
+          [user.id]
+        );
+        thisWeekCount = wk[0]?.c || 0;
+      }
+    audit.log(req, 'view_achievements', { loggedIn: true, count: rows.length, page, limit, thisWeekCount });
+    res.render('achievements', { achievements: rows, query: '', user, page, limit, total, category, metric, trends, thisWeekCount });
   } catch (err) {
     console.error('DB error:', err.message);
     audit.log(req, 'view_achievements_error', { error: err.message });
@@ -451,7 +547,7 @@ app.get('/achievements', async (req, res) => {
   }
 });
 
-app.get('/achievements/search', async (req, res) => {
+router.get('/achievements/search', async (req, res) => {
   try {
     const user = req.session.user || null;
     if (!user) {
@@ -488,12 +584,12 @@ app.get('/achievements/search', async (req, res) => {
   }
 });
 
-app.get('/achievements/add', requireAuth, (req, res) => {
+router.get('/achievements/add', requireAuth, (req, res) => {
   audit.log(req, 'view_add_achievement');
   res.render('add_achievement', { error: null, user: req.session.user || null });
 });
 
-app.post('/achievements/add', requireAuth, async (req, res) => {
+router.post('/achievements/add', requireAuth, async (req, res) => {
   try {
     const { title, category, metric, amount, notes } = req.body;
     const safeTitle = sanitizeText(title, { maxLen: 100 });
@@ -521,7 +617,7 @@ app.post('/achievements/add', requireAuth, async (req, res) => {
 });
 
 // Audit log viewer (recent activity)
-app.get('/audit-log', requireAuth, async (req, res) => {
+router.get('/audit-log', requireAuth, async (req, res) => {
   try {
     const [rows] = await db.query(
       `SELECT a.id, a.created_at, a.action, a.details, a.ip, a.user_agent, u.username
@@ -538,13 +634,13 @@ app.get('/audit-log', requireAuth, async (req, res) => {
 });
 
 // Weekly trends API: achievements per week for current user (last 8 weeks)
-app.get('/api/trends/weekly', requireAuth, async (req, res) => {
+router.get('/api/trends/weekly', requireAuth, async (req, res) => {
   try {
     const userId = req.session.user.id;
     const [rows] = await db.query(
       `SELECT YEARWEEK(created_at, 3) AS yw, COUNT(*) AS count
        FROM achievements
-       WHERE user_id = ? AND created_at >= DATE_SUB(CURDATE(), INTERVAL 56 DAY)
+       WHERE user_id = ? AND created_at >= NOW() - INTERVAL 8 WEEK
        GROUP BY YEARWEEK(created_at, 3)
        ORDER BY yw DESC`,
       [userId]
@@ -571,7 +667,61 @@ app.get('/api/trends/weekly', requireAuth, async (req, res) => {
   }
 });
 
+// Medication tracker
+router.get('/meds', requireAuth, async (req, res) => {
+  audit.log(req, 'view_meds');
+  try {
+    const userId = req.session.user.id;
+    const [rows] = await db.query(
+      'SELECT id, name, dosage, interval_hours, notes, created_at FROM medications WHERE user_id = ? ORDER BY created_at DESC',
+      [userId]
+    );
+    // Build simple schedule suggestions: next 24h based on interval_hours
+    const schedules = rows.map(m => {
+      const interval = m.interval_hours;
+      const now = new Date();
+      const times = [];
+      for (let t = 0; t < 24; t += interval) {
+        const d = new Date(now);
+        d.setHours(now.getHours() + t, 0, 0, 0);
+        times.push(d.toLocaleTimeString());
+      }
+      return { ...m, schedule: times };
+    });
+    res.render('meds', { user: req.session.user || null, meds: schedules, error: null, form: { name: '', dosage: '', interval_hours: '', notes: '' } });
+  } catch (err) {
+    console.error('Meds view error:', err);
+    res.status(500).render('meds', { user: req.session.user || null, meds: [], error: 'Unable to load medications.', form: { name: '', dosage: '', interval_hours: '', notes: '' } });
+  }
+});
+
+router.post('/meds', requireAuth, async (req, res) => {
+  try {
+    const userId = req.session.user.id;
+    const name = sanitizeText(req.body.name || '', { maxLen: 100 });
+    const dosage = sanitizeText(req.body.dosage || '', { maxLen: 100 });
+    const notes = sanitizeText(req.body.notes || '', { maxLen: 500 });
+    const intervalHours = parseInt((req.body.interval_hours || '').trim(), 10);
+    if (!name) {
+      return res.status(400).render('meds', { user: req.session.user || null, meds: [], error: 'Medication name is required.', form: { name, dosage, interval_hours: req.body.interval_hours || '', notes } });
+    }
+    if (Number.isNaN(intervalHours) || intervalHours <= 0 || intervalHours > 48) {
+      return res.status(400).render('meds', { user: req.session.user || null, meds: [], error: 'Interval must be a number between 1 and 48 hours.', form: { name, dosage, interval_hours: req.body.interval_hours || '', notes } });
+    }
+    await db.query(
+      'INSERT INTO medications (user_id, name, dosage, interval_hours, notes) VALUES (?, ?, ?, ?, ?)',
+      [userId, name, dosage || null, intervalHours, notes || null]
+    );
+    audit.log(req, 'add_medication', { name, intervalHours });
+    res.redirect('/meds');
+  } catch (err) {
+    console.error('Add med error:', err);
+    res.status(500).render('meds', { user: req.session.user || null, meds: [], error: 'Server error. Please try again.', form: { name: sanitizeText(req.body.name||'',{maxLen:100}), dosage: sanitizeText(req.body.dosage||'',{maxLen:100}), interval_hours: (req.body.interval_hours||''), notes: sanitizeText(req.body.notes||'',{maxLen:500}) } });
+  }
+});
+
 // 404 (keep this last)
+app.use('/', router);
 app.use((req, res) => {
   audit.log(req, 'not_found', { url: req.originalUrl });
   res.status(404).render('404', { user: req.session.user || null });

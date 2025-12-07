@@ -42,6 +42,10 @@ App runs on `http://localhost:8000`.
 - Audit log viewer: `GET /audit-log`
 - Status endpoint: `GET /status`
 - Dark theme styling
+- Period Tracker:
+	- `GET /period` to view logs and next estimated window
+	- `POST /period` to add a period start date and cycle length
+	- Table `period_logs` is created via `sql/create_db.sql`
 
 ## Security
 

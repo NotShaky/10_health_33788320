@@ -1,0 +1,49 @@
+<%- include('partials/layout', { title: 'Water Intake', user: (typeof user !== 'undefined' ? user : null) }) %>
+<section>
+  <h1>Daily Water Intake</h1>
+  <% if (error) { %><div class="error"><%= error %></div><% } %>
+  <form method="post" action="/tools/water" class="form" style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap;">
+    <div>
+      <label>Units</label>
+      <select name="unit">
+        <option value="metric" <%= form.unit==='metric'?'selected':'' %>>Metric (kg)</option>
+        <option value="imperial" <%= form.unit==='imperial'?'selected':'' %>>Imperial (lb)</option>
+      </select>
+    </div>
+    <div>
+      <label>Weight (<%= form.unit==='imperial' ? 'lb' : 'kg' %>)</label>
+      <input type="text" name="weight" value="<%= form.weight %>" />
+    </div>
+    <div>
+      <label>Activity</label>
+      <select name="activity">
+        <option value="sedentary" <%= form.activity==='sedentary'?'selected':'' %>>Sedentary</option>
+        <option value="light" <%= form.activity==='light'?'selected':'' %>>Light</option>
+        <option value="moderate" <%= form.activity==='moderate'?'selected':'' %>>Moderate</option>
+        <option value="active" <%= form.activity==='active'?'selected':'' %>>Active</option>
+        <option value="very" <%= form.activity==='very'?'selected':'' %>>Very active</option>
+      </select>
+    </div>
+    <div>
+      <label>Climate</label>
+      <select name="climate">
+        <option value="temperate" <%= form.climate==='temperate'?'selected':'' %>>Temperate</option>
+        <option value="warm" <%= form.climate==='warm'?'selected':'' %>>Warm</option>
+        <option value="hot" <%= form.climate==='hot'?'selected':'' %>>Hot</option>
+      </select>
+    </div>
+    <button type="submit">Calculate</button>
+  </form>
+  <% if (result) { %>
+    <div class="info" style="margin-top:12px;">
+      <strong>Recommended daily water:</strong>
+      <ul>
+        <li><%= result.ml %> ml</li>
+        <li><%= result.liters %> liters</li>
+        <li><%= result.cups %> cups (240 ml)</li>
+      </ul>
+    </div>
+  <% } %>
+  <p style="margin-top:12px; color: var(--muted); font-size: 0.9em;">This is a general recommendation. Adjust based on personal needs and medical advice.</p>
+</section>
+<%- include('partials/footer') %>

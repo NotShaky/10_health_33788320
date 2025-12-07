@@ -64,6 +64,13 @@
         <% }) %>
       </tbody>
     </table>
+      <div id="weekly-trends">
+        <h3>Weekly Trends</h3>
+        <% if (typeof thisWeekCount !== 'undefined') { %>
+          <p>This week: <strong><%= thisWeekCount %></strong> achievements</p>
+        <% } %>
+        <div id="sparkline" style="margin-top:10px;"></div>
+      </div>
     <div class="sparkline" style="display:flex; gap:4px; align-items:flex-end; height:60px; margin-top:8px;">
       <% const maxCount = Math.max.apply(null, trends.map(t => t.count)); %>
       <% trends.forEach(t => { %>
