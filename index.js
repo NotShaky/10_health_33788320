@@ -48,6 +48,16 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
+// Auto-detect base path from proxy header or URL segment
+app.use((req, res, next) => {
+  const hdr = req.headers['x-forwarded-prefix'];
+  // Example VM paths like /usr/361, /usr/123, etc.
+  const match = req.originalUrl && req.originalUrl.match(/^\/usr\/\d+/);
+  const inferred = hdr || (match ? match[0] : '');
+  res.locals.basePath = inferred || '';
+  next();
+});
+
 app.use(
   session({
     secret: process.env.SESSION_SECRET || 'change_this_secret',
