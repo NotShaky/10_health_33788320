@@ -1,8 +1,8 @@
 <%- include('partials/layout', { title: 'Heart Rate Zones', user: (typeof user !== 'undefined' ? user : null) }) %>
-<section>
-  <h1>Heart Rate Zones</h1>
-  <% if (error) { %><div class="error"><%= error %></div><% } %>
-  <form method="post" action="tools/hr" class="form" style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap;">
+<section class="card">
+  <h1 class="m-0">Heart Rate Zones</h1>
+  <% if (error) { %><div class="error mt-2"><%= error %></div><% } %>
+  <form method="post" action="<%= (typeof basePath !== 'undefined' ? basePath : '') %>/tools/hr" class="search-form mt-2">
     <div>
       <label>Age (years)</label>
       <input type="text" name="age" value="<%= age %>" />
@@ -10,10 +10,10 @@
     <button type="submit">Calculate</button>
   </form>
   <% if (result) { %>
-    <div class="info" style="margin-top:12px;">
+    <div class="mt-2">
       <strong>Max HR:</strong> <%= result.max %> bpm
     </div>
-    <table class="table" style="margin-top:8px;">
+    <table class="table mt-2">
       <thead>
         <tr><th>Zone</th><th>Range (bpm)</th></tr>
       </thead>

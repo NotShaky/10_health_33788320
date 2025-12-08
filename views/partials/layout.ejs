@@ -8,26 +8,28 @@
 </head>
 <body>
   <header>
-    <nav>
-      <a href="/">Home</a>
-      <a href="about">About</a>
-      <a href="achievements">Achievements</a>
-      <a href="achievements/add">Add Achievement</a>
-      <a href="tools">Fitness Tools</a>
-      <a href="period">Period Tracker</a>
-      <a href="meds">Medication Tracker</a>
-      <a href="audit-log">Audit Log</a>
-    </nav>
-    <div class="auth">
+    <div class="header-inner">
+      <nav>
+        <a href="<%= (typeof basePath !== 'undefined' ? basePath : '') %>/">Home</a>
+        <a href="<%= (typeof basePath !== 'undefined' ? basePath : '') %>/about">About</a>
+        <a href="<%= (typeof basePath !== 'undefined' ? basePath : '') %>/achievements">Achievements</a>
+        <a href="<%= (typeof basePath !== 'undefined' ? basePath : '') %>/achievements/add">Add Achievement</a>
+        <a href="<%= (typeof basePath !== 'undefined' ? basePath : '') %>/tools">Fitness Tools</a>
+        <a href="<%= (typeof basePath !== 'undefined' ? basePath : '') %>/period">Period Tracker</a>
+        <a href="<%= (typeof basePath !== 'undefined' ? basePath : '') %>/meds">Medication Tracker</a>
+        <a href="<%= (typeof basePath !== 'undefined' ? basePath : '') %>/audit-log">Audit Log</a>
+      </nav>
+      <div class="auth">
       <% if (user) { %>
         <span>Signed in as <%= user.username %></span>
-        <form method="post" action="logout" style="display:inline">
+        <form method="post" action="<%= (typeof basePath !== 'undefined' ? basePath : '') %>/logout" style="display:inline">
           <button type="submit">Logout</button>
         </form>
       <% } else { %>
-        <a href="register">Register</a>
-        <a href="login">Login</a>
+        <a href="<%= (typeof basePath !== 'undefined' ? basePath : '') %>/register">Register</a>
+        <a href="<%= (typeof basePath !== 'undefined' ? basePath : '') %>/login">Login</a>
       <% } %>
+      </div>
     </div>
   </header>
   <main>
