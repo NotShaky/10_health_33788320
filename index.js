@@ -647,7 +647,9 @@ router.post('/achievements/add', requireAuth, async (req, res) => {
     );
     audit.log(req, 'add_achievement', { title: safeTitle, category: safeCategory, metric: safeMetric, amount: amt });
     const bp7 = res.locals.basePath || '';
-    res.redirect(`${bp7}/achievements`);
+    const dest = `${bp7}/achievements`;
+    const abs = `${req.protocol}://${req.get('host')}${dest}`;
+    res.redirect(abs);
   } catch (err) {
     console.error(err);
     audit.log(req, 'add_achievement_error', { error: err.message });
