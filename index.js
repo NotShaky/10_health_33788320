@@ -303,7 +303,8 @@ router.post('/period', requireAuth, async (req, res) => {
     }
     await db.query('INSERT INTO period_logs (user_id, start_date, cycle_length) VALUES (?, ?, ?)', [userId, startDate, cycleLen]);
     audit.log(req, 'period_add', { start_date: startDate, cycle_length: cycleLen });
-    res.redirect('/period');
+    const bp1 = res.locals.basePath || '';
+    res.redirect(`${bp1}/period`);
   } catch (err) {
     console.error('Period add error:', err);
     audit.log(req, 'period_error', { error: err.message });
@@ -314,7 +315,10 @@ router.post('/period', requireAuth, async (req, res) => {
 // Audit page: per-user activity summary
 // Registration
 router.get('/register', (req, res) => {
-  if (req.session.user) return res.redirect('/');
+  if (req.session.user) {
+    const bp2 = res.locals.basePath || '';
+    return res.redirect(`${bp2}/`);
+  }
   audit.log(req, 'view_register');
   res.render('register', { error: null, user: null });
 });
@@ -331,7 +335,10 @@ function isValidPassword(pw) {
 
 router.post('/register', rateLimit({ windowMs: 60_000, max: 5 }), async (req, res) => {
   try {
-    if (req.session.user) return res.redirect('/');
+    if (req.session.user) {
+      const bp3 = res.locals.basePath || '';
+      return res.redirect(`${bp3}/`);
+    }
     const { username, password, confirm } = req.body;
     const safeUsername = sanitizeText(username, { maxLen: 50 });
     if (!username || !password || !confirm) {
@@ -354,7 +361,8 @@ router.post('/register', rateLimit({ windowMs: 60_000, max: 5 }), async (req, re
     const hash = await bcrypt.hash(password, 10);
     await db.query('INSERT INTO users (username, password_hash) VALUES (?, ?)', [safeUsername, hash]);
     audit.log(req, 'register_success', { username: safeUsername });
-    return res.redirect('/login');
+    const bp4 = res.locals.basePath || '';
+    return res.redirect(`${bp4}/login`);
   } catch (err) {
     console.error('Register error:', err.message);
     audit.log(req, 'register_failed', { reason: 'server_error', error: err.message });
@@ -488,7 +496,8 @@ router.post('/login', rateLimit({ windowMs: 60_000, max: 10 }), async (req, res)
     }
     req.session.user = { id: userRow.id, username: userRow.username };
     audit.log(req, 'login_success', { username: safeUsername });
-    return res.redirect('/');
+    const bp5 = res.locals.basePath || '';
+    return res.redirect(`${bp5}/`);
   } catch (err) {
     console.error('Login error:', err.message);
     audit.log(req, 'login_failed', { reason: 'server_error', error: err.message });
@@ -499,7 +508,8 @@ router.post('/login', rateLimit({ windowMs: 60_000, max: 10 }), async (req, res)
 router.post('/logout', (req, res) => {
   audit.log(req, 'logout');
   req.session.destroy(() => {
-    res.redirect('/');
+    const bp6 = res.locals.basePath || '';
+    res.redirect(`${bp6}/`);
   });
 });
 
@@ -618,7 +628,8 @@ router.post('/achievements/add', requireAuth, async (req, res) => {
       [req.session.user.id, safeTitle, safeCategory, safeMetric, amt, safeNotes || null]
     );
     audit.log(req, 'add_achievement', { title: safeTitle, category: safeCategory, metric: safeMetric, amount: amt });
-    res.redirect('/achievements');
+    const bp7 = res.locals.basePath || '';
+    res.redirect(`${bp7}/achievements`);
   } catch (err) {
     console.error(err);
     audit.log(req, 'add_achievement_error', { error: err.message });
@@ -784,7 +795,7 @@ router.post('/meds', requireAuth, async (req, res) => {
 });
 
 // 404 (keep this last)
-app.use('/', router);
+app.use(res.locals?.basePath || '/', router);
 app.use((req, res) => {
   audit.log(req, 'not_found', { url: req.originalUrl });
   res.status(404).render('404', { user: req.session.user || null });
