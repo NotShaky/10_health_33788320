@@ -76,7 +76,8 @@ app.use(
 // Simple auth middleware for optional login
 function requireAuth(req, res, next) {
   if (req.session && req.session.user) return next();
-  return res.redirect('/login');
+  const bpAuth = res.locals.basePath || '';
+  return res.redirect(`${bpAuth}/login`);
 }
 
 // Routes
@@ -309,7 +310,8 @@ router.post('/period', requireAuth, async (req, res) => {
     }
     await db.query('INSERT INTO period_logs (user_id, start_date, cycle_length) VALUES (?, ?, ?)', [userId, startDate, cycleLen]);
     audit.log(req, 'period_add', { start_date: startDate, cycle_length: cycleLen });
-    res.redirect('/period');
+    const bpPeriod = res.locals.basePath || '';
+    res.redirect(`${bpPeriod}/period`);
   } catch (err) {
     console.error('Period add error:', err);
     audit.log(req, 'period_error', { error: err.message });
@@ -366,7 +368,8 @@ router.post('/register', rateLimit({ windowMs: 60_000, max: 5 }), async (req, re
     const hash = await bcrypt.hash(password, 10);
     await db.query('INSERT INTO users (username, password_hash) VALUES (?, ?)', [safeUsername, hash]);
     audit.log(req, 'register_success', { username: safeUsername });
-    return res.redirect('/login');
+    const bpReg = res.locals.basePath || '';
+    return res.redirect(`${bpReg}/login`);
   } catch (err) {
     console.error('Register error:', err.message);
     audit.log(req, 'register_failed', { reason: 'server_error', error: err.message });
@@ -500,7 +503,8 @@ router.post('/login', rateLimit({ windowMs: 60_000, max: 10 }), async (req, res)
     }
     req.session.user = { id: userRow.id, username: userRow.username };
     audit.log(req, 'login_success', { username: safeUsername });
-    return res.redirect('/');
+    const bpLogin = res.locals.basePath || '';
+    return res.redirect(`${bpLogin}/`);
   } catch (err) {
     console.error('Login error:', err.message);
     audit.log(req, 'login_failed', { reason: 'server_error', error: err.message });
@@ -790,7 +794,8 @@ router.post('/meds', requireAuth, async (req, res) => {
       [userId, name, dosage || null, freqType==='interval'? intervalHours : null, freqType, freqType!=='interval'? timeOfDay : null, freqType==='weekly'? daysOfWeek : null, notes || null]
     );
     audit.log(req, 'add_medication', { name, intervalHours });
-    res.redirect('/meds');
+    const bpMeds = res.locals.basePath || '';
+    res.redirect(`${bpMeds}/meds`);
   } catch (err) {
     console.error('Add med error:', err);
     res.status(500).render('meds', { user: req.session.user || null, meds: [], error: 'Server error. Please try again.', form: { name: sanitizeText(req.body.name||'',{maxLen:100}), dosage: sanitizeText(req.body.dosage||'',{maxLen:100}), interval_hours: (req.body.interval_hours||''), freq_type: sanitizeText(req.body.freq_type||'interval',{maxLen:10}), time_of_day: sanitizeText(req.body.time_of_day||'',{maxLen:5}), days_of_week: sanitizeText(req.body.days_of_week||'',{maxLen:50}), notes: sanitizeText(req.body.notes||'',{maxLen:500}) } });
