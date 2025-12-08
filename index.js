@@ -37,6 +37,7 @@ function rateLimit({ windowMs = 60_000, max = 10 }) {
 // sanitizeText imported from ./src/sanitize
 
 const app = express();
+app.set('trust proxy', true);
 const PORT = 8000;
 // Support deployment under a subpath (e.g., /usr/361)
 const BASE_PATH = (process.env.HEALTH_BASE_PATH || '').replace(/"/g, '').trim();
@@ -77,7 +78,9 @@ app.use(
 function requireAuth(req, res, next) {
   if (req.session && req.session.user) return next();
   const bpAuth = res.locals.basePath || '';
-  return res.redirect(`${bpAuth}/login`);
+  const dest = `${bpAuth}/login`;
+  const abs = `${req.protocol}://${req.get('host')}${dest}`;
+  return res.redirect(abs);
 }
 
 // Routes
@@ -311,7 +314,9 @@ router.post('/period', requireAuth, async (req, res) => {
     await db.query('INSERT INTO period_logs (user_id, start_date, cycle_length) VALUES (?, ?, ?)', [userId, startDate, cycleLen]);
     audit.log(req, 'period_add', { start_date: startDate, cycle_length: cycleLen });
     const bpPeriod = res.locals.basePath || '';
-    res.redirect(`${bpPeriod}/period`);
+    const dest = `${bpPeriod}/period`;
+    const abs = `${req.protocol}://${req.get('host')}${dest}`;
+    res.redirect(abs);
   } catch (err) {
     console.error('Period add error:', err);
     audit.log(req, 'period_error', { error: err.message });
@@ -369,7 +374,9 @@ router.post('/register', rateLimit({ windowMs: 60_000, max: 5 }), async (req, re
     await db.query('INSERT INTO users (username, password_hash) VALUES (?, ?)', [safeUsername, hash]);
     audit.log(req, 'register_success', { username: safeUsername });
     const bpReg = res.locals.basePath || '';
-    return res.redirect(`${bpReg}/login`);
+    const dest = `${bpReg}/login`;
+    const abs = `${req.protocol}://${req.get('host')}${dest}`;
+    return res.redirect(abs);
   } catch (err) {
     console.error('Register error:', err.message);
     audit.log(req, 'register_failed', { reason: 'server_error', error: err.message });
@@ -504,7 +511,9 @@ router.post('/login', rateLimit({ windowMs: 60_000, max: 10 }), async (req, res)
     req.session.user = { id: userRow.id, username: userRow.username };
     audit.log(req, 'login_success', { username: safeUsername });
     const bpLogin = res.locals.basePath || '';
-    return res.redirect(`${bpLogin}/`);
+    const dest = `${bpLogin}/`;
+    const abs = `${req.protocol}://${req.get('host')}${dest}`;
+    return res.redirect(abs);
   } catch (err) {
     console.error('Login error:', err.message);
     audit.log(req, 'login_failed', { reason: 'server_error', error: err.message });
@@ -516,7 +525,9 @@ router.post('/logout', (req, res) => {
   audit.log(req, 'logout');
   req.session.destroy(() => {
     const bp6 = res.locals.basePath || '';
-    res.redirect(`${bp6}/`);
+    const dest = `${bp6}/`;
+    const abs = `${req.protocol}://${req.get('host')}${dest}`;
+    res.redirect(abs);
   });
 });
 
@@ -795,7 +806,9 @@ router.post('/meds', requireAuth, async (req, res) => {
     );
     audit.log(req, 'add_medication', { name, intervalHours });
     const bpMeds = res.locals.basePath || '';
-    res.redirect(`${bpMeds}/meds`);
+    const dest = `${bpMeds}/meds`;
+    const abs = `${req.protocol}://${req.get('host')}${dest}`;
+    res.redirect(abs);
   } catch (err) {
     console.error('Add med error:', err);
     res.status(500).render('meds', { user: req.session.user || null, meds: [], error: 'Server error. Please try again.', form: { name: sanitizeText(req.body.name||'',{maxLen:100}), dosage: sanitizeText(req.body.dosage||'',{maxLen:100}), interval_hours: (req.body.interval_hours||''), freq_type: sanitizeText(req.body.freq_type||'interval',{maxLen:10}), time_of_day: sanitizeText(req.body.time_of_day||'',{maxLen:5}), days_of_week: sanitizeText(req.body.days_of_week||'',{maxLen:50}), notes: sanitizeText(req.body.notes||'',{maxLen:500}) } });
