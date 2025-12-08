@@ -55,10 +55,10 @@ app.set('views', path.join(__dirname, 'views'));
 // Auto-detect base path from proxy header or URL segment
 app.use((req, res, next) => {
   const hdr = req.headers['x-forwarded-prefix'];
-  // Example VM paths like /usr/361, /usr/123, etc.
+  // Prefer explicit VM subpath like /usr/361 if present
   const match = req.originalUrl && req.originalUrl.match(/^\/usr\/\d+/);
-  const inferred = hdr || (match ? match[0] : '');
-  res.locals.basePath = inferred || '';
+  const inferred = (match ? match[0] : '') || hdr || '';
+  res.locals.basePath = inferred;
   next();
 });
 
