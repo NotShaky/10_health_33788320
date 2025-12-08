@@ -805,12 +805,7 @@ router.post('/meds', requireAuth, async (req, res) => {
 });
 
 // 404 (keep this last)
-// Mount router under base path if provided
-if (BASE_PATH) {
-  app.use(BASE_PATH, router);
-} else {
-  app.use('/', router);
-}
+app.use('/', router);
 app.use((req, res) => {
   audit.log(req, 'not_found', { url: req.originalUrl });
   res.status(404).render('404', { user: req.session.user || null });
