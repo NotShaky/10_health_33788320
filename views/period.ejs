@@ -1,0 +1,93 @@
+<%- include('partials/layout', { title: 'Period Tracker', user: (typeof user !== 'undefined' ? user : null) }) %>
+<section>
+  <h1>Period Tracker</h1>
+  <% if (error) { %><div class="error"><%= error %></div><% } %>
+  <form method="post" action="period" class="form" style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap;">
+    <div>
+      <label>Start date (YYYY-MM-DD)</label>
+      <input type="date" name="start_date" value="<%= form.start_date %>" />
+    </div>
+    <div>
+      <label>Cycle length (days)</label>
+      <input type="number" name="cycle_length" min="20" max="60" value="<%= form.cycle_length %>" />
+    </div>
+    <button type="submit">Add</button>
+  </form>
+  <% if (logs && logs.length) { %>
+    <div style="margin-top:16px;">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h3>Cycle Calendar</h3>
+        <% 
+          const cur = new Date(calYear, calMonth, 1);
+          const prev = new Date(calYear, calMonth - 1, 1);
+          const next = new Date(calYear, calMonth + 1, 1);
+        %>
+        <div style="display:flex; gap:8px;">
+          <a class="btn" href="/period?year=<%= prev.getFullYear() %>&month=<%= prev.getMonth() %>">Prev</a>
+          <a class="btn" href="/period?year=<%= next.getFullYear() %>&month=<%= next.getMonth() %>">Next</a>
+        </div>
+      </div>
+      <% 
+        const year = typeof calYear !== 'undefined' ? calYear : new Date().getFullYear();
+        const month = typeof calMonth !== 'undefined' ? calMonth : new Date().getMonth();
+        const firstDay = new Date(year, month, 1);
+        const startWeekday = firstDay.getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const periodDates = new Set();
+        logs.forEach(l => {
+          const sd = new Date(l.start_date);
+          periodDates.add(sd.toISOString().slice(0,10));
+        });
+        const nextStart = nextWindow ? new Date(nextWindow.start) : null;
+        const nextEnd = nextWindow ? new Date(nextWindow.end) : null;
+      %>
+      <div class="calendar" style="display:grid; grid-template-columns: repeat(7, 1fr); gap:6px; background: var(--panel); padding:12px; border:1px solid var(--border); border-radius:8px;">
+        <div style="text-align:center; grid-column: 1 / -1; font-weight:600; margin-bottom:6px;">
+          <%= new Date(year, month, 1).toLocaleString(undefined, { month: 'long', year: 'numeric' }) %>
+        </div>
+        <% ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].forEach(d => { %>
+          <div style="text-align:center; color: var(--muted);"><%= d %></div>
+        <% }) %>
+        <% for (let i = 0; i < startWeekday; i++) { %>
+          <div></div>
+        <% } %>
+        <% for (let day = 1; day <= daysInMonth; day++) { 
+             const d = new Date(year, month, day);
+             const iso = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())).toISOString().slice(0,10);
+             const isStart = periodDates.has(iso);
+             const inNext = nextStart && nextEnd && d >= nextStart && d <= nextEnd;
+        %>
+          <div title="<%= iso %>"
+               style="padding:10px; border:1px solid var(--border); border-radius:6px; text-align:center; background:
+                 <%= isStart ? '#0ea5e933' : inNext ? '#ef444433' : '#0b1220' %>;
+               color:
+                 <%= isStart ? '#0ea5e9' : inNext ? '#ef4444' : 'inherit' %>;
+               font-weight:
+                 <%= isStart || inNext ? '600' : '400' %>;
+          ">
+            <%= day %>
+          </div>
+        <% } %>
+      </div>
+        <div style="display:flex; gap:12px; align-items:center; margin:8px 0 12px;">
+        <span style="display:inline-flex; align-items:center; gap:6px;"><span style="width:14px; height:14px; background:#0ea5e933; border:1px solid #0ea5e9; border-radius:3px; display:inline-block;"></span> Start dates</span>
+        <span style="display:inline-flex; align-items:center; gap:6px;"><span style="width:14px; height:14px; background:#ef444433; border:1px solid #ef4444; border-radius:3px; display:inline-block;"></span> Estimated window</span>
+      </div>
+    </div>
+  <% } %>
+  
+  <h3 style="margin-top:16px;">Recent Logs</h3>
+  <table class="table">
+    <thead><tr><th>Start date</th><th>Cycle length (days)</th></tr></thead>
+    <tbody>
+      <% if (logs && logs.length) { %>
+        <% logs.forEach(l => { %>
+          <tr><td><%= l.start_date.toISOString ? l.start_date.toISOString().slice(0,10) : String(l.start_date).slice(0,10) %></td><td><%= l.cycle_length %></td></tr>
+        <% }) %>
+      <% } else { %>
+        <tr><td colspan="2">No logs yet.</td></tr>
+      <% } %>
+    </tbody>
+  </table>
+</section>
+<%- include('partials/footer') %>
