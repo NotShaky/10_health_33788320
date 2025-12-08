@@ -46,12 +46,9 @@ const router = express.Router();
 app.use(morgan('dev'));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-// Serve static files; if deployed under a base path, serve there as well
-if (BASE_PATH) {
-  app.use(BASE_PATH, express.static(path.join(__dirname, 'public')));
-} else {
-  app.use(express.static(path.join(__dirname, 'public')));
-}
+// Serve static files at root and under common VM subpath prefix
+app.use(express.static(path.join(__dirname, 'public')));
+app.use('/usr', express.static(path.join(__dirname, 'public')));
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
@@ -74,11 +71,7 @@ app.use(
   })
 );
 
-// Expose base path to all views
-app.use((req, res, next) => {
-  res.locals.basePath = BASE_PATH || '';
-  next();
-});
+// Do not override auto-detected basePath; keep request-derived value
 
 // Simple auth middleware for optional login
 function requireAuth(req, res, next) {
