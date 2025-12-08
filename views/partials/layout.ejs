@@ -4,29 +4,29 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title><%= title || 'Health & Fitness App' %></title>
-  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="<%= (typeof basePath !== 'undefined' ? basePath : '') %>/styles.css" />
 </head>
 <body>
   <header>
     <nav>
-      <a href="">Home</a>
-      <a href="about">About</a>
-      <a href="achievements">Achievements</a>
-      <a href="achievements/add">Add Achievement</a>
-      <a href="tools">Fitness Tools</a>
-      <a href="period">Period Tracker</a>
-      <a href="meds">Medication Tracker</a>
-      <a href="audit-log">Audit Log</a>
+      <a href="<%= basePath %>/">Home</a>
+      <a href="<%= basePath %>/about">About</a>
+      <a href="<%= basePath %>/achievements">Achievements</a>
+      <a href="<%= basePath %>/achievements/add">Add Achievement</a>
+      <a href="<%= basePath %>/tools">Fitness Tools</a>
+      <a href="<%= basePath %>/period">Period Tracker</a>
+      <a href="<%= basePath %>/meds">Medication Tracker</a>
+      <a href="<%= basePath %>/audit-log">Audit Log</a>
     </nav>
     <div class="auth">
       <% if (user) { %>
         <span>Signed in as <%= user.username %></span>
-        <form method="post" action="logout" style="display:inline">
+        <form method="post" action="<%= basePath %>/logout" style="display:inline">
           <button type="submit">Logout</button>
         </form>
       <% } else { %>
-        <a href="register">Register</a>
-        <a href="login">Login</a>
+        <a href="<%= basePath %>/register">Register</a>
+        <a href="<%= basePath %>/login">Login</a>
       <% } %>
     </div>
   </header>

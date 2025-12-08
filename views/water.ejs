@@ -2,7 +2,7 @@
 <section>
   <h1>Daily Water Intake</h1>
   <% if (error) { %><div class="error"><%= error %></div><% } %>
-  <form method="post" action="/tools/water" class="form" style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap;">
+  <form method="post" action="<%= basePath %>/tools/water" class="form" style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap;">
     <div>
       <label>Units</label>
       <select name="unit">

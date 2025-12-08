@@ -2,7 +2,7 @@
 <section>
   <h1>Medication Tracker</h1>
   <% if (error) { %><div class="error"><%= error %></div><% } %>
-  <form method="post" action="/meds" class="form" style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap;">
+  <form method="post" action="<%= basePath %>/meds" class="form" style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap;">
     <div>
       <label>Medication name</label>
       <input type="text" name="name" value="<%= form.name %>" />

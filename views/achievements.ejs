@@ -1,7 +1,7 @@
 <%- include('partials/layout', { title: 'Achievements', user: (typeof user !== 'undefined' ? user : null) }) %>
 <section>
   <h1>Achievements</h1>
-  <form method="get" action="/achievements/search" class="search-form">
+  <form method="get" action="<%= basePath %>/achievements/search" class="search-form">
     <input type="text" name="q" placeholder="Search by title, category, notes" value="<%= query %>" />
     <button type="submit">Search</button>
   </form>
@@ -41,7 +41,7 @@
   <% } %>
   <% if (user) { %>
     <div style="margin-top:12px; display:flex; gap:8px; align-items:center;">
-      <a class="button" href="/achievements/export.csv">Export CSV</a>
+      <a class="button" href="<%= basePath %>/achievements/export.csv">Export CSV</a>
     </div>
   <% } %>
   <% if (typeof trends !== 'undefined' && trends && trends.length) { %>
