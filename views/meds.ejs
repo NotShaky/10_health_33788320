@@ -16,7 +16,7 @@
       <select name="freq_type">
         <option value="interval" <%= form.freq_type==='interval'?'selected':'' %>>Every N hours</option>
         <option value="daily" <%= form.freq_type==='daily'?'selected':'' %>>Daily at time</option>
-        <option value="weekly" <%= form.freq_type==='weekly'?'selected':'' %>>Weekly on days</option>
+        <option value="weekly" <%= form.freq_type==='weekly'?'selected':'' %>>Once/twice a week</option>
       </select>
     </div>
     <div id="interval_fields">
@@ -28,7 +28,7 @@
       <input type="text" name="time_of_day" value="<%= form.time_of_day %>" placeholder="08:00" />
     </div>
     <div id="weekly_fields">
-      <label>Days of week (e.g., Mon,Thu)</label>
+      <label>Days of the week (e.g., Mon,Thu)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 </label>
       <input type="text" name="days_of_week" value="<%= form.days_of_week %>" placeholder="Mon,Thu" />
     </div>
     <div style="flex:1;">
