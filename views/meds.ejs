@@ -28,7 +28,7 @@
       <input type="text" name="time_of_day" value="<%= form.time_of_day %>" placeholder="08:00" />
     </div>
     <div id="weekly_fields">
-      <label>Days of the week (e.g., Mon,Thu)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 </label>
+      <label>Days of the week (e.g., Mon,Thu)</label>
       <input type="text" name="days_of_week" value="<%= form.days_of_week %>" placeholder="Mon,Thu" />
     </div>
     <div style="flex:1;">
@@ -45,13 +45,16 @@
       const dailyEl = document.getElementById('daily_fields');
       const weeklyEl = document.getElementById('weekly_fields');
       function updateVisibility(){
+        if (!freqSel) return;
         const v = freqSel.value;
-        intervalEl.style.display = v === 'interval' ? '' : 'none';
-        dailyEl.style.display = v === 'daily' ? '' : 'none';
-        weeklyEl.style.display = v === 'weekly' ? '' : 'none';
+        intervalEl.style.display = v === 'interval' ? 'block' : 'none';
+        dailyEl.style.display = v === 'daily' ? 'block' : 'none';
+        weeklyEl.style.display = v === 'weekly' ? 'block' : 'none';
       }
-      freqSel.addEventListener('change', updateVisibility);
-      updateVisibility();
+      if (freqSel) {
+        freqSel.addEventListener('change', updateVisibility);
+        updateVisibility();
+      }
     })();
   </script>
 
