@@ -791,14 +791,26 @@ router.post('/meds', requireAuth, async (req, res) => {
         return res.status(400).render('meds', { user: req.session.user || null, meds: [], error: 'Time of day must be HH:MM.', form: { name, dosage, interval_hours: '', freq_type: freqType, time_of_day: timeOfDay, days_of_week: '', notes } });
       }
     } else if (freqType === 'weekly') {
-      if (!/^\d{2}:\d{2}$/.test(timeOfDay)) {
-        return res.status(400).render('meds', { user: req.session.user || null, meds: [], error: 'Time of day must be HH:MM.', form: { name, dosage, interval_hours: '', freq_type: freqType, time_of_day: timeOfDay, days_of_week: daysOfWeek, notes } });
-      }
-      const validDays = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-      const days = daysOfWeek.split(',').map(s => s.trim()).filter(Boolean);
-      if (!days.length || !days.every(d => validDays.includes(d))) {
-        return res.status(400).render('meds', { user: req.session.user || null, meds: [], error: 'Days of week must be comma-separated (Sun,Mon,...)', form: { name, dosage, interval_hours: '', freq_type: freqType, time_of_day: timeOfDay, days_of_week: daysOfWeek, notes } });
-      }
+        if (!/^\d{2}:\d{2}$/.test(timeOfDay)) {
+          return res.status(400).render('meds', { user: req.session.user || null, meds: [], error: 'Time of day must be HH:MM.', form: { name, dosage, interval_hours: '', freq_type: freqType, time_of_day: timeOfDay, days_of_week: daysOfWeek, notes } });
+        }
+        const aliasMap = {
+          'sun': 'Sun', 'sunday': 'Sun',
+          'mon': 'Mon', 'monday': 'Mon',
+          'tue': 'Tue', 'tues': 'Tue', 'tuesday': 'Tue',
+          'wed': 'Wed', 'wednesday': 'Wed',
+          'thu': 'Thu', 'thur': 'Thu', 'thurs': 'Thu', 'thursday': 'Thu',
+          'fri': 'Fri', 'friday': 'Fri',
+          'sat': 'Sat', 'saturday': 'Sat'
+        };
+        const rawDays = daysOfWeek.split(',').map(s => s.trim()).filter(Boolean);
+        const normalizedDays = rawDays.map(d => aliasMap[d.toLowerCase()] || null).filter(Boolean);
+        const uniqueDays = Array.from(new Set(normalizedDays));
+        if (!uniqueDays.length) {
+          return res.status(400).render('meds', { user: req.session.user || null, meds: [], error: 'Days must be comma-separated names like Mon,Thu (case-insensitive; full names allowed).', form: { name, dosage, interval_hours: '', freq_type: freqType, time_of_day: timeOfDay, days_of_week: daysOfWeek, notes } });
+        }
+        // Persist normalized, canonical abbreviations
+        req.body.days_of_week = uniqueDays.join(',');
     } else {
       return res.status(400).render('meds', { user: req.session.user || null, meds: [], error: 'Invalid frequency type.', form: { name, dosage, interval_hours: req.body.interval_hours || '', freq_type: freqType, time_of_day: timeOfDay, days_of_week: daysOfWeek, notes } });
     }
