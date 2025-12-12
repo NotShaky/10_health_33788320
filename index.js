@@ -274,6 +274,9 @@ router.post('/tools/nutrition', async (req, res) => {
     const result = await fetchCalorieNinjas('/v1/nutrition', { query: q });
     const items = Array.isArray(result?.items) ? result.items : Array.isArray(result) ? result : [];
     audit.log(req, 'nutrition_success', { q, count: items.length });
+    if (!items.length) {
+      return res.status(404).render('nutrition', { user: req.session.user || null, error: 'No results found.', items: [], q });
+    }
     res.render('nutrition', { user: req.session.user || null, error: null, items, q });
   } catch (err) {
     console.error('Nutrition API error:', err.message);
@@ -298,6 +301,9 @@ router.post('/tools/recipes', async (req, res) => {
     const result = await fetchCalorieNinjas('/v1/recipe', { query: q });
     const items = Array.isArray(result?.items) ? result.items : Array.isArray(result) ? result : [];
     audit.log(req, 'recipes_success', { q, count: items.length });
+    if (!items.length) {
+      return res.status(404).render('recipes', { user: req.session.user || null, error: 'No recipes found.', items: [], q });
+    }
     res.render('recipes', { user: req.session.user || null, error: null, items, q });
   } catch (err) {
     console.error('Recipes API error:', err.message);
@@ -322,6 +328,9 @@ router.post('/tools/portions', async (req, res) => {
     const result = await fetchCalorieNinjas('/v1/portion', { query: q });
     const items = Array.isArray(result?.items) ? result.items : Array.isArray(result) ? result : [];
     audit.log(req, 'portions_success', { q, count: items.length });
+    if (!items.length) {
+      return res.status(404).render('portions', { user: req.session.user || null, error: 'No portions found.', items: [], q });
+    }
     res.render('portions', { user: req.session.user || null, error: null, items, q });
   } catch (err) {
     console.error('Portions API error:', err.message);
