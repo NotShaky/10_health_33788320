@@ -1,0 +1,38 @@
+<%- include('partials/layout', { title: 'Nutrition Lookup', user: (typeof user !== 'undefined' ? user : null) }) %>
+<section>
+  <h1>Nutrition Lookup</h1>
+  <% if (error) { %><div class="error"><%= error %></div><% } %>
+  <form method="post" action="<%= (typeof basePath !== 'undefined' ? basePath : '') %>/tools/nutrition" class="form" style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap;">
+    <div style="flex:1">
+      <label>Food (e.g., "banana", "chicken breast")</label>
+      <input type="text" name="q" value="<%= q %>" />
+    </div>
+    <div style="flex:1">
+      <label>API Ninjas Key (stored in session)</label>
+      <input type="text" name="api_key" value="<%= api_key %>" />
+    </div>
+    <button type="submit">Search</button>
+  </form>
+  <% if (items && items.length) { %>
+    <table class="table" style="margin-top:12px;">
+      <thead>
+        <tr>
+          <th>Item</th><th>Serving</th><th>Calories</th><th>Protein (g)</th><th>Carbs (g)</th><th>Fat (g)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% items.forEach(it => { %>
+          <tr>
+            <td><%= it.name %></td>
+            <td><%= it.serving_size_g %> g</td>
+            <td><%= it.calories %></td>
+            <td><%= it.protein_g %></td>
+            <td><%= it.carbohydrates_total_g %></td>
+            <td><%= it.fat_total_g %></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  <% } %>
+</section>
+<%- include('partials/footer') %>
