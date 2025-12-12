@@ -1,0 +1,31 @@
+<%- include('partials/layout', { title: 'Food Portions', user: (typeof user !== 'undefined' ? user : null) }) %>
+<section>
+  <h1>Food Portions</h1>
+  <% if (error) { %><div class="error"><%= error %></div><% } %>
+  <form method="post" action="<%= (typeof basePath !== 'undefined' ? basePath : '') %>/tools/portions" class="form" style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap;">
+    <div style="flex:1">
+      <label>Food (e.g., "rice", "chicken")</label>
+      <input type="text" name="q" value="<%= q %>" />
+    </div>
+    <button type="submit">Search</button>
+  </form>
+  <% if (items && items.length) { %>
+    <table class="table" style="margin-top:12px;">
+      <thead>
+        <tr>
+          <th>Item</th><th>Serving</th><th>Metric</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% items.forEach(it => { %>
+          <tr>
+            <td><%= it.name || it.food %></td>
+            <td><%= it.serving_size || it.serving_size_g %></td>
+            <td><%= it.metric || '' %></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  <% } %>
+</section>
+<%- include('partials/footer') %>

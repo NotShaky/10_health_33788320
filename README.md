@@ -44,6 +44,7 @@ See [`sanitizeText`](src/sanitize.js) and test script [scripts/test_sanitize.js]
 - Add, search, filter, paginate achievements; CSV export for current user
 - Fitness Tools:
   - BMI, BMR/TDEE (Mifflin‑St Jeor), Heart Rate Zones, Macro Calculator, Water Intake
+  - Nutrition Lookup (CalorieNinjas)
 - Period Tracker (calendar + next-window estimate)
 - Medication Tracker (interval / daily / weekly schedules + next due)
 - Audit log viewer for site actions
@@ -73,6 +74,22 @@ See [`sanitizeText`](src/sanitize.js) and test script [scripts/test_sanitize.js]
 - Provide DB credentials via environment.
 - Initialize DB using the SQL files above.
 - For VM/subpath deployments set HEALTH_BASE_PATH or rely on X-Forwarded headers.
+
+## Nutrition Lookup
+
+- Route: `/tools/nutrition` (in [index.js](index.js), view in [views/nutrition.ejs](views/nutrition.ejs))
+- Uses CalorieNinjas `/v1/nutrition?query=food` with an app-internal API key.
+- No user input required for the key.
+- Returned fields shown: `name`, `serving_size_g`, `calories`, `protein_g`, `carbohydrates_total_g`, `fat_total_g`.
+
+### Run (Windows PowerShell)
+
+```powershell
+npm install
+node index.js
+```
+
+If deployed under a subpath (e.g., `/usr/361`), the app auto-detects and adjusts links.
 
 ## Links 
 
