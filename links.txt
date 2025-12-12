@@ -13,4 +13,6 @@ water intake=http://www.doc.gold.ac.uk/usr/361/tools/water
 nutrition lookup=http://www.doc.gold.ac.uk/usr/361/tools/nutrition
 period tracker=http://www.doc.gold.ac.uk/usr/361/period
 medication tracker=http://www.doc.gold.ac.uk/usr/361/meds
-audit_log=http://www.doc.gold.ac.uk/usr/361/audit-log
+audit log=http://www.doc.gold.ac.uk/usr/361/audit-log
+achievements api=http://www.doc.gold.ac.uk/usr/361/api/achievements
+weekly trends api=http://www.doc.gold.ac.uk/usr/361/api/trends/weekly

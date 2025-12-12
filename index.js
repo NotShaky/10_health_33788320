@@ -10,7 +10,7 @@ const { Readable } = require('stream');
 const { sanitizeText } = require('./src/sanitize');
 const https = require('https');
 
-// CalorieNinjas API key (hardcoded as requested)
+// CalorieNinjas API key
 const CALORIE_NINJAS_KEY = "iXRzvGVsFukMEPsyl0bu3A==N8zHx6duqJ6gQIOZ";
 
 // CalorieNinjas client
@@ -61,8 +61,6 @@ function rateLimit({ windowMs = 60_000, max = 10 }) {
     next();
   };
 }
-
-// sanitizeText imported from ./src/sanitize
 
 const app = express();
 app.set('trust proxy', true);
@@ -257,7 +255,7 @@ router.get('/tools/water', (req, res) => {
   res.render('water', { user: req.session.user || null, result: null, error: null, form: { weight: '', unit: 'metric', activity: 'moderate', climate: 'temperate' } });
 });
 
-// Nutrition Lookup (API Ninjas) — key provided via form/session, no .env required
+// Nutrition Lookup (API Ninjas)
 router.get('/tools/nutrition', (req, res) => {
   audit.log(req, 'view_nutrition');
   res.render('nutrition', { user: req.session.user || null, error: null, items: [], q: '' });
@@ -481,7 +479,7 @@ router.get('/achievements/export.csv', requireAuth, async (req, res) => {
   }
 });
 
-// JSON API: GET achievements (paginated)
+// JSON API: GET achievements
 router.get('/api/achievements', requireAuth, async (req, res) => {
   try {
     const user = req.session.user;
