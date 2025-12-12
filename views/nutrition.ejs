@@ -7,10 +7,6 @@
       <label>Food (e.g., "banana", "chicken breast")</label>
       <input type="text" name="q" value="<%= q %>" />
     </div>
-    <div style="flex:1">
-      <label>API Ninjas Key (stored in session)</label>
-      <input type="text" name="api_key" value="<%= api_key %>" />
-    </div>
     <button type="submit">Search</button>
   </form>
   <% if (items && items.length) { %>

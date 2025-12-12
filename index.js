@@ -10,14 +10,17 @@ const { Readable } = require('stream');
 const { sanitizeText } = require('./src/sanitize');
 const https = require('https');
 
-// API Ninjas client
-async function fetchNinjasJson(pathname, qs, apiKey) {
+// CalorieNinjas API key (hardcoded as requested)
+const CALORIE_NINJAS_KEY = "iXRzvGVsFukMEPsyl0bu3A==N8zHx6duqJ6gQIOZ";
+
+// CalorieNinjas client
+async function fetchCalorieNinjas(pathname, qs) {
   return new Promise((resolve, reject) => {
-    const key = (apiKey || '').trim();
-    if (!key) return reject(new Error('Missing API_NINJAS_KEY'));
+    const key = (CALORIE_NINJAS_KEY || '').trim();
+    if (!key) return reject(new Error('Missing CalorieNinjas API key'));
     const query = new URLSearchParams(qs || {}).toString();
     const options = {
-      hostname: 'api.api-ninjas.com',
+      hostname: 'api.calorieninjas.com',
       path: `${pathname}?${query}`,
       method: 'GET',
       headers: { 'X-Api-Key': key }
@@ -257,25 +260,25 @@ router.get('/tools/water', (req, res) => {
 // Nutrition Lookup (API Ninjas) — key provided via form/session, no .env required
 router.get('/tools/nutrition', (req, res) => {
   audit.log(req, 'view_nutrition');
-  res.render('nutrition', { user: req.session.user || null, error: null, items: [], q: '', api_key: req.session.apiNinjasKey || '' });
+  res.render('nutrition', { user: req.session.user || null, error: null, items: [], q: '' });
 });
 
 router.post('/tools/nutrition', async (req, res) => {
   const q = sanitizeText(req.body.q || '', { maxLen: 100 });
-  const apiKey = sanitizeText(req.body.api_key || (req.session.apiNinjasKey || ''), { maxLen: 100 });
-  if (apiKey) req.session.apiNinjasKey = apiKey; // remember for session
   if (!q) {
     audit.log(req, 'nutrition_failed', { reason: 'empty' });
-    return res.status(400).render('nutrition', { user: req.session.user || null, error: 'Enter a food name, e.g., "apple"', items: [], q, api_key: apiKey });
+    return res.status(400).render('nutrition', { user: req.session.user || null, error: 'Enter a food name, e.g., "apple"', items: [], q });
   }
   try {
-    const items = await fetchNinjasJson('/v1/nutrition', { query: q }, apiKey);
-    audit.log(req, 'nutrition_success', { q, count: Array.isArray(items) ? items.length : 0 });
-    res.render('nutrition', { user: req.session.user || null, error: null, items: Array.isArray(items) ? items : [], q, api_key: apiKey });
+    // CalorieNinjas nutrition endpoint uses query param 'query'
+    const result = await fetchCalorieNinjas('/v1/nutrition', { query: q });
+    const items = Array.isArray(result?.items) ? result.items : Array.isArray(result) ? result : [];
+    audit.log(req, 'nutrition_success', { q, count: items.length });
+    res.render('nutrition', { user: req.session.user || null, error: null, items, q });
   } catch (err) {
     console.error('Nutrition API error:', err.message);
     audit.log(req, 'nutrition_error', { error: err.message });
-    res.status(500).render('nutrition', { user: req.session.user || null, error: 'Failed to fetch nutrition data (check API key).', items: [], q, api_key: apiKey });
+    res.status(500).render('nutrition', { user: req.session.user || null, error: 'Failed to fetch nutrition data.', items: [], q });
   }
 });
 
