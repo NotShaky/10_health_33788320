@@ -74,6 +74,10 @@ See [`sanitizeText`](src/sanitize.js) and test script [scripts/test_sanitize.js]
 - Initialize DB using the SQL files above.
 - For VM/subpath deployments set HEALTH_BASE_PATH or rely on X-Forwarded headers.
 
+## Links 
+
+See links.txt for deployed links
+
 ## Notes
 
 - Default seeded user: username `gold` (see [sql/insert_test_data.sql](sql/insert_test_data.sql)).
