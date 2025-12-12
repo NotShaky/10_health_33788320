@@ -274,68 +274,11 @@ router.post('/tools/nutrition', async (req, res) => {
     const result = await fetchCalorieNinjas('/v1/nutrition', { query: q });
     const items = Array.isArray(result?.items) ? result.items : Array.isArray(result) ? result : [];
     audit.log(req, 'nutrition_success', { q, count: items.length });
-    if (!items.length) {
-      return res.status(404).render('nutrition', { user: req.session.user || null, error: 'No results found.', items: [], q });
-    }
     res.render('nutrition', { user: req.session.user || null, error: null, items, q });
   } catch (err) {
     console.error('Nutrition API error:', err.message);
     audit.log(req, 'nutrition_error', { error: err.message });
     res.status(500).render('nutrition', { user: req.session.user || null, error: 'Failed to fetch nutrition data.', items: [], q });
-  }
-});
-
-// Recipes Lookup (CalorieNinjas /v1/recipe?query=...)
-router.get('/tools/recipes', (req, res) => {
-  audit.log(req, 'view_recipes');
-  res.render('recipes', { user: req.session.user || null, error: null, items: [], q: '' });
-});
-
-router.post('/tools/recipes', async (req, res) => {
-  const q = sanitizeText(req.body.q || '', { maxLen: 100 });
-  if (!q) {
-    audit.log(req, 'recipes_failed', { reason: 'empty' });
-    return res.status(400).render('recipes', { user: req.session.user || null, error: 'Enter a recipe keyword, e.g., "pasta"', items: [], q });
-  }
-  try {
-    const result = await fetchCalorieNinjas('/v1/recipe', { query: q });
-    const items = Array.isArray(result?.items) ? result.items : Array.isArray(result) ? result : [];
-    audit.log(req, 'recipes_success', { q, count: items.length });
-    if (!items.length) {
-      return res.status(404).render('recipes', { user: req.session.user || null, error: 'No recipes found.', items: [], q });
-    }
-    res.render('recipes', { user: req.session.user || null, error: null, items, q });
-  } catch (err) {
-    console.error('Recipes API error:', err.message);
-    audit.log(req, 'recipes_error', { error: err.message });
-    res.status(500).render('recipes', { user: req.session.user || null, error: 'Failed to fetch recipes.', items: [], q });
-  }
-});
-
-// Food Portions Lookup (CalorieNinjas /v1/portion?query=...)
-router.get('/tools/portions', (req, res) => {
-  audit.log(req, 'view_portions');
-  res.render('portions', { user: req.session.user || null, error: null, items: [], q: '' });
-});
-
-router.post('/tools/portions', async (req, res) => {
-  const q = sanitizeText(req.body.q || '', { maxLen: 100 });
-  if (!q) {
-    audit.log(req, 'portions_failed', { reason: 'empty' });
-    return res.status(400).render('portions', { user: req.session.user || null, error: 'Enter a food, e.g., "rice"', items: [], q });
-  }
-  try {
-    const result = await fetchCalorieNinjas('/v1/portion', { query: q });
-    const items = Array.isArray(result?.items) ? result.items : Array.isArray(result) ? result : [];
-    audit.log(req, 'portions_success', { q, count: items.length });
-    if (!items.length) {
-      return res.status(404).render('portions', { user: req.session.user || null, error: 'No portions found.', items: [], q });
-    }
-    res.render('portions', { user: req.session.user || null, error: null, items, q });
-  } catch (err) {
-    console.error('Portions API error:', err.message);
-    audit.log(req, 'portions_error', { error: err.message });
-    res.status(500).render('portions', { user: req.session.user || null, error: 'Failed to fetch portions.', items: [], q });
   }
 });
 
