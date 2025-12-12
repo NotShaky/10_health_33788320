@@ -254,6 +254,31 @@ router.get('/tools/water', (req, res) => {
   res.render('water', { user: req.session.user || null, result: null, error: null, form: { weight: '', unit: 'metric', activity: 'moderate', climate: 'temperate' } });
 });
 
+// Nutrition Lookup (API Ninjas) — key provided via form/session, no .env required
+router.get('/tools/nutrition', (req, res) => {
+  audit.log(req, 'view_nutrition');
+  res.render('nutrition', { user: req.session.user || null, error: null, items: [], q: '', api_key: req.session.apiNinjasKey || '' });
+});
+
+router.post('/tools/nutrition', async (req, res) => {
+  const q = sanitizeText(req.body.q || '', { maxLen: 100 });
+  const apiKey = sanitizeText(req.body.api_key || (req.session.apiNinjasKey || ''), { maxLen: 100 });
+  if (apiKey) req.session.apiNinjasKey = apiKey; // remember for session
+  if (!q) {
+    audit.log(req, 'nutrition_failed', { reason: 'empty' });
+    return res.status(400).render('nutrition', { user: req.session.user || null, error: 'Enter a food name, e.g., "apple"', items: [], q, api_key: apiKey });
+  }
+  try {
+    const items = await fetchNinjasJson('/v1/nutrition', { query: q }, apiKey);
+    audit.log(req, 'nutrition_success', { q, count: Array.isArray(items) ? items.length : 0 });
+    res.render('nutrition', { user: req.session.user || null, error: null, items: Array.isArray(items) ? items : [], q, api_key: apiKey });
+  } catch (err) {
+    console.error('Nutrition API error:', err.message);
+    audit.log(req, 'nutrition_error', { error: err.message });
+    res.status(500).render('nutrition', { user: req.session.user || null, error: 'Failed to fetch nutrition data (check API key).', items: [], q, api_key: apiKey });
+  }
+});
+
 router.post('/tools/water', (req, res) => {
   try {
     const unit = (req.body.unit || 'metric').trim();
