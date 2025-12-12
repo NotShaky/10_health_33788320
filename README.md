@@ -22,8 +22,7 @@ Install dependencies and start the server:
 
 ```sh
 npm install
-npm start
-# or: node index.js
+node index.js
 ```
 
 App runs on http://localhost:8000 by default (see [index.js](index.js)). If deployed under a subpath set HEALTH_BASE_PATH in your environment.
