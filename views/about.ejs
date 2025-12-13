@@ -26,10 +26,10 @@
 
   <h2>Navigate</h2>
   <p>
-    <a href="<%= (res && res.locals && res.locals.basePath) ? res.locals.basePath : '' %>/">Home</a> ·
-    <a href="<%= (res && res.locals && res.locals.basePath) ? res.locals.basePath : '' %>/tools">Tools</a> ·
-    <a href="<%= (res && res.locals && res.locals.basePath) ? res.locals.basePath : '' %>/achievements">Achievements</a> ·
-    <a href="<%= (res && res.locals && res.locals.basePath) ? res.locals.basePath : '' %>/tools/nutrition">Nutrition</a>
+    <a href="<%= (typeof basePath !== 'undefined' && basePath) ? basePath : '' %>/">Home</a> ·
+    <a href="<%= (typeof basePath !== 'undefined' && basePath) ? basePath : '' %>/tools">Tools</a> ·
+    <a href="<%= (typeof basePath !== 'undefined' && basePath) ? basePath : '' %>/achievements">Achievements</a> ·
+    <a href="<%= (typeof basePath !== 'undefined' && basePath) ? basePath : '' %>/tools/nutrition">Nutrition</a>
   </p>
 
   <h2>Tech Stack</h2>
