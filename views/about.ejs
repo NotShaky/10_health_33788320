@@ -1,7 +1,38 @@
 <%- include('partials/layout', { title: 'About', user }) %>
 <section>
   <h1>About</h1>
-  <p>This coursework app demonstrates Node.js, Express, EJS, and MySQL.</p>
-  <p>It includes login, add/search features, and clean EJS views.</p>
+  <p>
+    Health Toolkit is a simple Node.js + Express app using EJS views and MySQL.
+    It helps you track achievements, medications, and period logs, and provides
+    quick fitness calculators.
+  </p>
+
+  <h2>Features</h2>
+  <ul>
+    <li>Authentication: register, login, and session-based access</li>
+    <li>Achievements: add, search, export CSV, weekly trend insights</li>
+    <li>Medication Tracker: interval, daily, or weekly schedules</li>
+    <li>Period Logs: record start dates and estimate next window</li>
+    <li>Fitness Tools: BMI, BMR/TDEE, Heart Rate zones, Macros, Water intake</li>
+    <li>Nutrition Lookup: powered by CalorieNinjas API</li>
+  </ul>
+
+  <h2>Data & Privacy</h2>
+  <p>
+    Your data is stored in a local MySQL database. Actions are recorded in an
+    audit log to help trace activity. No third-party trackers are used. The
+    Nutrition lookup sends food queries to CalorieNinjas.
+  </p>
+
+  <h2>Navigate</h2>
+  <p>
+    <a href="<%= (res && res.locals && res.locals.basePath) ? res.locals.basePath : '' %>/">Home</a> ·
+    <a href="<%= (res && res.locals && res.locals.basePath) ? res.locals.basePath : '' %>/tools">Tools</a> ·
+    <a href="<%= (res && res.locals && res.locals.basePath) ? res.locals.basePath : '' %>/achievements">Achievements</a> ·
+    <a href="<%= (res && res.locals && res.locals.basePath) ? res.locals.basePath : '' %>/tools/nutrition">Nutrition</a>
+  </p>
+
+  <h2>Tech Stack</h2>
+  <p>Express, EJS, MySQL (mysql2), express-session, bcrypt, and morgan.</p>
 </section>
 <%- include('partials/footer') %>
